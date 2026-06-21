@@ -1,0 +1,20 @@
+export const mockReport = {
+  handle: "@influen_cer__",
+  platform: "Instagram",
+  followerCount: "412K",
+  fraudScore: 74,
+  riskLevel: "HIGH",
+  followerAuthenticity: "38%",
+  engagementRate: "1.2%",
+  nicheAvgEngagement: "3.8%",
+  commentPattern: "Bot-pattern language detected",
+  growthVelocity: "+89K followers in 48hrs",
+  estimatedRealReach: "~156,000",
+  totalFollowers: "412,000",
+  signals: [
+    { label: "Follower Authenticity", value: "38% real", risk: "high" as const },
+    { label: "Engagement Rate", value: "1.2% (avg: 3.8%)", risk: "medium" as const },
+    { label: "Comment Pattern", value: "Bot-pattern detected", risk: "high" as const },
+    { label: "Growth Velocity", value: "+89K in 48hrs — spike", risk: "medium" as const },
+  ],
+};

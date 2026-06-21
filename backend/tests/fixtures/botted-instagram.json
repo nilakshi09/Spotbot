@@ -1,0 +1,58 @@
+{
+  "profile": {
+    "displayName": "Life of Luxury",
+    "followers": 412000,
+    "following": 100,
+    "posts": 50,
+    "bio": "Luxury lifestyle | Travel",
+    "profilePictureUrl": "http://example.com/pic2.jpg",
+    "isVerified": false,
+    "category": "Lifestyle"
+  },
+  "posts": [
+    { "id": "p1", "timestamp": "2024-05-10T10:00:00Z", "likes": 3000, "commentsCount": 50, "caption": "Dubai" },
+    { "id": "p2", "timestamp": "2024-05-12T10:00:00Z", "likes": 3200, "commentsCount": 60, "caption": "Yacht" },
+    { "id": "p3", "timestamp": "2024-05-14T10:00:00Z", "likes": 3100, "commentsCount": 45, "caption": "Cars" },
+    { "id": "p4", "timestamp": "2024-05-16T10:00:00Z", "likes": 3300, "commentsCount": 55, "caption": "Watch" },
+    { "id": "p5", "timestamp": "2024-05-18T10:00:00Z", "likes": 3400, "commentsCount": 70, "caption": "View" }
+  ],
+  "comments": [
+    { "text": "Awesome post 🔥", "username": "bot1", "timestamp": "2024-05-10T11:00:00Z" },
+    { "text": "Great job!", "username": "bot2", "timestamp": "2024-05-10T12:00:00Z" },
+    { "text": "🔥🔥🔥", "username": "bot3", "timestamp": "2024-05-12T11:00:00Z" },
+    { "text": "Check out my page", "username": "bot4", "timestamp": "2024-05-14T11:00:00Z" },
+    { "text": "Awesome post 🔥", "username": "bot5", "timestamp": "2024-05-16T11:00:00Z" },
+    { "text": "Awesome post 🔥", "username": "bot6", "timestamp": "2024-05-16T12:00:00Z" },
+    { "text": "Nice pic!", "username": "bot7", "timestamp": "2024-05-18T11:00:00Z" }
+  ],
+  "followerHistory": [
+    { "date": "2024-03-20", "followers": 299000 },
+    { "date": "2024-03-21", "followers": 299100 },
+    { "date": "2024-03-22", "followers": 299200 },
+    { "date": "2024-03-23", "followers": 299300 },
+    { "date": "2024-03-24", "followers": 299400 },
+    { "date": "2024-03-25", "followers": 299500 },
+    { "date": "2024-03-26", "followers": 299600 },
+    { "date": "2024-03-27", "followers": 299700 },
+    { "date": "2024-03-28", "followers": 299800 },
+    { "date": "2024-03-29", "followers": 299900 },
+    { "date": "2024-03-30", "followers": 300000 },
+    { "date": "2024-03-31", "followers": 300000 },
+    { "date": "2024-04-01", "followers": 300000 },
+    { "date": "2024-04-02", "followers": 300100 },
+    { "date": "2024-04-03", "followers": 300200 },
+    { "date": "2024-04-04", "followers": 300300 },
+    { "date": "2024-04-05", "followers": 350000 },
+    { "date": "2024-04-06", "followers": 350100 },
+    { "date": "2024-04-07", "followers": 350200 },
+    { "date": "2024-04-08", "followers": 350300 },
+    { "date": "2024-04-09", "followers": 350400 },
+    { "date": "2024-04-10", "followers": 350500 },
+    { "date": "2024-04-11", "followers": 350600 },
+    { "date": "2024-04-12", "followers": 390000 },
+    { "date": "2024-04-13", "followers": 390100 },
+    { "date": "2024-04-14", "followers": 390200 },
+    { "date": "2024-04-15", "followers": 412000 },
+    { "date": "2024-04-16", "followers": 412000 }
+  ]
+}

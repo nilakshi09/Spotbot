@@ -1,0 +1,43 @@
+{
+  "profile": {
+    "displayName": "Fit Sarah",
+    "followers": 45000,
+    "following": 500,
+    "posts": 300,
+    "bio": "Fitness lover | Gym every day",
+    "profilePictureUrl": "http://example.com/pic.jpg",
+    "isVerified": false,
+    "category": "Fitness"
+  },
+  "posts": [
+    { "id": "p1", "timestamp": "2024-05-10T10:00:00Z", "likes": 1200, "commentsCount": 100, "caption": "Morning run" },
+    { "id": "p2", "timestamp": "2024-05-12T10:00:00Z", "likes": 1300, "commentsCount": 120, "caption": "Lifting" },
+    { "id": "p3", "timestamp": "2024-05-14T10:00:00Z", "likes": 1400, "commentsCount": 110, "caption": "Healthy food" },
+    { "id": "p4", "timestamp": "2024-05-16T10:00:00Z", "likes": 1250, "commentsCount": 105, "caption": "Yoga time" },
+    { "id": "p5", "timestamp": "2024-05-18T10:00:00Z", "likes": 1350, "commentsCount": 115, "caption": "Rest day" }
+  ],
+  "comments": [
+    { "text": "This is so inspiring, Sarah!", "username": "user1", "timestamp": "2024-05-10T11:00:00Z" },
+    { "text": "I really needed to see this today.", "username": "user2", "timestamp": "2024-05-10T12:00:00Z" },
+    { "text": "What shoes are those?", "username": "user3", "timestamp": "2024-05-12T11:00:00Z" },
+    { "text": "Looks delicious! Recipe?", "username": "user4", "timestamp": "2024-05-14T11:00:00Z" }
+  ],
+  "followerHistory": [
+    { "date": "2024-04-01", "followers": 40000 },
+    { "date": "2024-04-02", "followers": 40050 },
+    { "date": "2024-04-03", "followers": 40100 },
+    { "date": "2024-04-04", "followers": 40160 },
+    { "date": "2024-04-05", "followers": 40210 },
+    { "date": "2024-04-06", "followers": 40280 },
+    { "date": "2024-04-07", "followers": 40320 },
+    { "date": "2024-04-08", "followers": 40380 },
+    { "date": "2024-04-09", "followers": 40430 },
+    { "date": "2024-04-10", "followers": 40490 },
+    { "date": "2024-04-11", "followers": 40540 },
+    { "date": "2024-04-12", "followers": 40590 },
+    { "date": "2024-04-13", "followers": 40650 },
+    { "date": "2024-04-14", "followers": 40700 },
+    { "date": "2024-04-15", "followers": 40760 },
+    { "date": "2024-04-16", "followers": 40810 }
+  ]
+}

@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies (frontend)
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint (frontend)
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Typecheck (frontend)
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+
+      - name: Install dependencies (backend)
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Lint (backend)
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Typecheck (backend)
+        working-directory: ./backend
+        run: npm run typecheck
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: spotbot
+          POSTGRES_USER: spotbot
+          POSTGRES_PASSWORD: spotbot_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://spotbot:spotbot_dev@localhost:5432/spotbot
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-jwt-secret-key-at-least-32-chars-long
+          JWT_REFRESH_SECRET: test-refresh-secret-key-at-least-32-chars-long
+          FRONTEND_URL: http://localhost:3000
+          RESEND_API_KEY: test_resend_api_key
+        run: npm run test
