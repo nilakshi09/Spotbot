@@ -8,7 +8,8 @@ import { getMetrics } from '../utils/metrics.js';
 
 export async function healthRoutes(app: FastifyInstance) {
   app.get('/api/health', async (req, reply) => {
-    const checks: Record<string, unknown> = {}
+    // const checks: Record<string, unknown> = {}
+    const checks: Record<string, any> = {}
     let overallStatus: 'ok' | 'degraded' | 'down' = 'ok'
 
     // Database check
@@ -54,9 +55,18 @@ export async function healthRoutes(app: FastifyInstance) {
       }
       // Warn if queue is backing up
       if (waiting > 50) {
-        checks.queue = { ...checks.queue, status: 'degraded', warning: 'Queue depth exceeds 50' }
-        overallStatus = overallStatus === 'ok' ? 'degraded' : overallStatus
-      }
+  checks.queue = {
+    status: 'degraded',
+    waiting,
+    active,
+    failed,
+    warning: 'Queue depth exceeds 50',
+  }
+
+  overallStatus = overallStatus === 'ok'
+    ? 'degraded'
+    : overallStatus
+}
     } catch (error) {
       checks.queue = { status: 'error', error: 'Queue unreachable' }
       overallStatus = overallStatus === 'ok' ? 'degraded' : overallStatus

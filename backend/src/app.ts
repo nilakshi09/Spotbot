@@ -13,6 +13,7 @@ import { authRoutes } from './routes/auth.routes.js';
 import { scanRoutes } from './routes/scan.routes.js';
 import { userRoutes } from './routes/user.routes.js';
 import { reportRoutes } from './routes/report.routes.js';
+import billingRoutes from './routes/billing.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -83,7 +84,9 @@ export async function buildApp() {
   await app.register(scanRoutes, { prefix: '/api/scans' });
   await app.register(userRoutes, { prefix: '/api/users' });
   await app.register(reportRoutes, { prefix: '/api' });
-  await app.register(import('./routes/billing.routes.js'), { prefix: '/api/billing' });
+  await app.register(billingRoutes, {
+  prefix: '/api/billing'
+});
 
   return app;
 }

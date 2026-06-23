@@ -1,9 +1,8 @@
 import Stripe from 'stripe';
 import { env } from '../config/env.js';
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-06-20',
-  typescript: true,
+export const stripe: Stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+  apiVersion: '2026-05-27.dahlia',
 });
 
 // Plan configuration — single source of truth

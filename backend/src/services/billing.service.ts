@@ -40,7 +40,11 @@ export class BillingService {
       try {
         const sub = await stripe.subscriptions.retrieve(org.stripeSubscriptionId);
         stripeSubscription = sub;
-        nextBillingDate = new Date(sub.current_period_end * 1000).toISOString();
+        const currentPeriodEnd = (sub as any).current_period_end;
+
+if (currentPeriodEnd) {
+  nextBillingDate = new Date(currentPeriodEnd * 1000).toISOString();
+}
       } catch {
         // Stripe unreachable — return DB data only
       }

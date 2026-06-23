@@ -9,10 +9,10 @@ export interface JwtPayload {
   plan: string;
 }
 
-declare module 'fastify' {
-  interface FastifyRequest {
-    // @ts-ignore
-    user: JwtPayload;
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    payload: JwtPayload
+    user: JwtPayload
   }
 }
 

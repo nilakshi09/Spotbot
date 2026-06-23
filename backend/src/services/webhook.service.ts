@@ -129,7 +129,8 @@ export class WebhookService {
     // Only reset quota on subscription renewals, not the first payment
     if (invoice.billing_reason !== 'subscription_cycle') return;
 
-    const subscriptionId = invoice.subscription as string;
+    const subscriptionId = invoice.parent?.subscription_details?.subscription as string | undefined;
+
     if (!subscriptionId) return;
 
     // Find org by subscription ID
@@ -147,7 +148,8 @@ export class WebhookService {
   // ─── INVOICE PAYMENT FAILED ──────────────────────────────────────────────
 
   private async handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-    const subscriptionId = invoice.subscription as string;
+    const subscriptionId = invoice.parent?.subscription_details?.subscription as string | undefined;
+
     if (!subscriptionId) return;
 
     const org = await db.query.organizations.findFirst({
@@ -186,7 +188,7 @@ export class WebhookService {
     await db.insert(billingEvents).values({
       stripeEventId: event.id,
       eventType: event.type,
-      eventData: event.data.object as Record<string, unknown>,
+      eventData: event.data.object as unknown as Record<string, unknown>,
     }).onConflictDoNothing();
   }
 }
