@@ -1,6 +1,6 @@
 import { getAccessToken, setAccessToken } from './auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface ApiError {
   code: string;
@@ -28,7 +28,7 @@ class ApiClient {
 
     let res: Response;
     try {
-      res = await fetch(`${API_BASE}${path}`, {
+      res = await fetch(`${baseUrl}${path}`, {
         method,
         headers,
         credentials: 'include',
@@ -43,7 +43,7 @@ class ApiClient {
       const refreshed = await this.tryRefresh();
       if (refreshed) {
         headers['Authorization'] = `Bearer ${getAccessToken()}`;
-        const retryRes = await fetch(`${API_BASE}${path}`, {
+        const retryRes = await fetch(`${baseUrl}${path}`, {
           method,
           headers,
           credentials: 'include',
@@ -70,7 +70,7 @@ class ApiClient {
 
   private async tryRefresh(): Promise<boolean> {
     try {
-      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+      const res = await fetch(`${baseUrl}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
       });

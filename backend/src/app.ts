@@ -17,6 +17,7 @@ import scanRoutes from './routes/scan.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
+    ignoreTrailingSlash: true,
     logger: {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
       transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
