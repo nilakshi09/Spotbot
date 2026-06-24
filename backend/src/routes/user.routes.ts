@@ -7,6 +7,7 @@ import { users } from '../db/schema/users.js';
 import { refreshTokens } from '../db/schema/refresh_tokens.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
+import { UnauthorizedError } from '../middleware/error-handler.js';
 import bcrypt from 'bcrypt';
 import { quotaService } from '../services/quota.service.js';
 import { billingService } from '../services/billing.service.js';
@@ -20,8 +21,12 @@ export async function userRoutes(app: FastifyInstance) {
   app.addHook('onRequest', verifyAccessToken);
 
   app.get('/me/stats', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
-    const orgId = (request.user as any).organizationId;
+    const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
+
+    if (!orgId) {
+      throw new UnauthorizedError('No organization found');
+    }
 
     const org = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1);
     if (!org[0]) {
@@ -54,13 +59,13 @@ export async function userRoutes(app: FastifyInstance) {
   });
 
   app.get('/me/quota', async (request: FastifyRequest, reply: FastifyReply) => {
-    const orgId = (request.user as any).organizationId;
+    const orgId = (request.user as any).orgId;
     const status = await quotaService.getQuotaStatus(orgId);
     return reply.send(status);
   });
 
   app.post('/me/change-password', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
+    const userId = (request.user as any).sub;
     const body = ChangePasswordSchema.parse(request.body);
 
     const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -80,8 +85,8 @@ export async function userRoutes(app: FastifyInstance) {
   });
 
   app.delete('/me', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
-    const orgId = (request.user as any).organizationId;
+    const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
 
     const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!userRecord[0]) return reply.status(404).send({ error: 'User not found' });

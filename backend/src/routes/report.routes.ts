@@ -66,7 +66,7 @@ export async function reportRoutes(app: FastifyInstance) {
     protectedApp.addHook('onRequest', verifyAccessToken);
 
     protectedApp.get('/reports/:scanId', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).id;
+      const userId = (request.user as any).sub;
       const { scanId } = request.params;
 
       const scan = await scanService.getScan(scanId, userId);
@@ -96,7 +96,7 @@ export async function reportRoutes(app: FastifyInstance) {
     });
 
     protectedApp.get('/reports/:scanId/pdf', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).id;
+      const userId = (request.user as any).sub;
       const { scanId } = request.params;
 
       const scan = await scanService.getScan(scanId, userId);
@@ -134,7 +134,7 @@ export async function reportRoutes(app: FastifyInstance) {
     });
 
     protectedApp.post('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).id;
+      const userId = (request.user as any).sub;
       const { scanId } = request.params;
       const body = ShareSchema.parse(request.body);
 

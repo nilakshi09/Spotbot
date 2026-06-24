@@ -32,8 +32,8 @@ export async function scanRoutes(app: FastifyInstance) {
 
   app.post('/', { preHandler: [checkScanQuota] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { platform, handle } = CreateScanSchema.parse(request.body);
-    const userId = (request.user as any).id;
-    const orgId = (request.user as any).organizationId;
+    const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
 
     try {
       const result = await scanService.createScan(userId, orgId, platform, handle);
@@ -61,7 +61,7 @@ export async function scanRoutes(app: FastifyInstance) {
   });
 
   app.get('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
+    const userId = (request.user as any).sub;
     const scanId = request.params.id;
 
     const scan = await scanService.getScan(scanId, userId);
@@ -116,7 +116,7 @@ export async function scanRoutes(app: FastifyInstance) {
   });
 
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
+    const userId = (request.user as any).sub;
     const query = ListScansSchema.parse(request.query);
 
     const result = await scanService.listScans(userId, query);
@@ -124,7 +124,7 @@ export async function scanRoutes(app: FastifyInstance) {
   });
 
   app.delete('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
+    const userId = (request.user as any).sub;
     const scanId = request.params.id;
 
     await scanService.deleteScan(scanId, userId);
@@ -132,8 +132,8 @@ export async function scanRoutes(app: FastifyInstance) {
   });
 
   app.post('/:id/rescan', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-    const userId = (request.user as any).id;
-    const orgId = (request.user as any).organizationId;
+    const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
     const scanId = request.params.id;
 
     const result = await scanService.rescan(scanId, userId, orgId);
