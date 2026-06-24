@@ -17,7 +17,7 @@ const ShareSchema = z.object({
   expiresInDays: z.number().min(1).max(30).default(7),
 });
 
-export async function reportRoutes(app: FastifyInstance) {
+export default async function reportRoutes(app: FastifyInstance) {
   // Public endpoint (no auth)
   app.get('/public/reports/:token', async (request: FastifyRequest<{ Params: { token: string } }>, reply: FastifyReply) => {
     const { token } = request.params;

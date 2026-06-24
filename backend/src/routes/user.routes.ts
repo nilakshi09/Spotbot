@@ -17,7 +17,7 @@ const ChangePasswordSchema = z.object({
   newPassword: z.string().min(8).regex(/[A-Z]/, 'Requires at least 1 uppercase').regex(/[a-z]/, 'Requires at least 1 lowercase').regex(/[0-9]/, 'Requires at least 1 number'),
 });
 
-export async function userRoutes(app: FastifyInstance) {
+export default async function userRoutes(app: FastifyInstance) {
   app.addHook('onRequest', verifyAccessToken);
 
   app.get('/me/stats', async (request: FastifyRequest, reply: FastifyReply) => {

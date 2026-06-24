@@ -6,8 +6,8 @@ import { scanQueue } from '../jobs/queue.js';
 import { env } from '../config/env.js';
 import { getMetrics } from '../utils/metrics.js';
 
-export async function healthRoutes(app: FastifyInstance) {
-  app.get('/api/health', async (req, reply) => {
+export default async function healthRoutes(app: FastifyInstance) {
+  app.get('/health', async (req, reply) => {
     // const checks: Record<string, unknown> = {}
     const checks: Record<string, any> = {}
     let overallStatus: 'ok' | 'degraded' | 'down' = 'ok'

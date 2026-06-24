@@ -8,11 +8,12 @@ import rateLimit from '@fastify/rate-limit';
 import { env } from './config/env.js';
 import { globalErrorHandler } from './middleware/error-handler.js';
 import rawBody from 'fastify-raw-body';
-import { healthRoutes } from './routes/health.routes.js';
-import { authRoutes } from './routes/auth.routes.js';
-import { userRoutes } from './routes/user.routes.js';
-import { reportRoutes } from './routes/report.routes.js';
+import healthRoutes from './routes/health.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import reportRoutes from './routes/report.routes.js';
 import billingRoutes from './routes/billing.routes.js';
+import scanRoutes from './routes/scan.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -78,14 +79,12 @@ export async function buildApp() {
   startMetricsLogging();
 
   // Routes
-  await app.register(healthRoutes);
-  await app.register(authRoutes);
-  await app.register(import('./routes/scan.routes.js'), { prefix: '/api/scans' });
+  await app.register(healthRoutes, { prefix: '/api' });
+  await app.register(authRoutes, { prefix: '/api/auth' });
+  await app.register(scanRoutes, { prefix: '/api/scans' });
   await app.register(userRoutes, { prefix: '/api/users' });
   await app.register(reportRoutes, { prefix: '/api' });
-  await app.register(billingRoutes, {
-  prefix: '/api/billing'
-});
+  await app.register(billingRoutes, { prefix: '/api/billing' });
 
   return app;
 }

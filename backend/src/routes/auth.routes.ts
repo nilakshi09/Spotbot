@@ -23,10 +23,10 @@ const resetPasswordSchema = z.object({
   password: z.string().min(8),
 });
 
-export async function authRoutes(app: FastifyInstance) {
+export default async function authRoutes(app: FastifyInstance) {
   const authService = createAuthService(app);
 
-  app.post('/api/auth/signup', {
+  app.post('/signup', {
     config: {
       rateLimit: {
         max: 5,
@@ -51,7 +51,7 @@ export async function authRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post('/api/auth/login', {
+  app.post('/login', {
     config: {
       rateLimit: {
         max: 5,
@@ -76,7 +76,7 @@ export async function authRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post('/api/auth/refresh', async (request, reply) => {
+  app.post('/refresh', async (request, reply) => {
     const refreshToken = request.cookies.refreshToken;
     if (!refreshToken) {
       return reply.status(401).send({ error: { code: 'UNAUTHORIZED', message: 'No refresh token provided' } });
@@ -97,19 +97,19 @@ export async function authRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post('/api/auth/forgot-password', async (request, reply) => {
+  app.post('/forgot-password', async (request, reply) => {
     const data = forgotPasswordSchema.parse(request.body);
     await authService.forgotPassword(data.email);
     return { message: 'If an account exists, a reset link has been sent' };
   });
 
-  app.post('/api/auth/reset-password', async (request, reply) => {
+  app.post('/reset-password', async (request, reply) => {
     const data = resetPasswordSchema.parse(request.body);
     await authService.resetPassword(data.token, data.password);
     return { message: 'Password has been reset' };
   });
 
-  app.post('/api/auth/logout', async (request, reply) => {
+  app.post('/logout', async (request, reply) => {
     reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Logged out' };
   });
