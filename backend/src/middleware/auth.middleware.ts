@@ -18,7 +18,15 @@ declare module '@fastify/jwt' {
 
 export async function verifyAccessToken(request: FastifyRequest) {
   try {
-    await request.jwtVerify();
+    const payload = await request.jwtVerify<JwtPayload>();
+    request.user = {
+      sub: payload.sub,
+      email: payload.email,
+      orgId: payload.orgId,
+      role: payload.role,
+      plan: payload.plan,
+    };
+    console.log('JWT verified, req.user:', request.user);
   } catch (err) {
     throw new UnauthorizedError('Invalid or expired access token');
   }

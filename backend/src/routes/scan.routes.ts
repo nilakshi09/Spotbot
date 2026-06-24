@@ -26,7 +26,7 @@ const ListScansSchema = z.object({
   status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
 });
 
-export async function scanRoutes(app: FastifyInstance) {
+export default async function scanRoutes(app: FastifyInstance) {
   // All scan routes require authentication
   app.addHook('onRequest', verifyAccessToken);
 

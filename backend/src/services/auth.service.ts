@@ -39,7 +39,7 @@ export function createAuthService(fastify: FastifyInstance) {
         const payload = {
           sub: user.id,
           email: user.email,
-          orgId: org.id,
+          orgId: user.organizationId,
           role: user.role,
           plan: org.plan,
         };
@@ -94,7 +94,7 @@ export function createAuthService(fastify: FastifyInstance) {
       const payload = {
         sub: user.id,
         email: user.email,
-        orgId: org.id,
+        orgId: user.organizationId,
         role: user.role,
         plan: org.plan,
       };
@@ -126,14 +126,18 @@ export function createAuthService(fastify: FastifyInstance) {
     },
 
     async refresh(refreshToken: string) {
+      if (!refreshToken) {
+        throw new UnauthorizedError('Invalid refresh token');
+      }
+
       const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
-      const rt = await db.query.refreshTokens.findFirst({
-        where: and(
+      const [rt] = await db.select().from(schema.refreshTokens).where(
+        and(
           eq(schema.refreshTokens.tokenHash, tokenHash),
           eq(schema.refreshTokens.revoked, false)
         )
-      });
+      ).limit(1);
 
       if (!rt || rt.expiresAt < new Date()) {
         throw new UnauthorizedError('Invalid refresh token');
@@ -157,9 +161,9 @@ export function createAuthService(fastify: FastifyInstance) {
       const payload = {
         sub: user.id,
         email: user.email,
-        orgId: org.id,
+        orgId: user.organizationId,
         role: user.role,
-        plan: org.plan,
+        plan: org ? org.plan : 'free',
       };
 
       const newAccessToken = fastify.jwt.sign(payload);
