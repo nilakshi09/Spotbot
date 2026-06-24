@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiClient, ApiClientError } from '@/lib/api-client';
 import { UpgradeWall } from '../billing/upgrade-wall';
 
 export function QuickScanInput() {
@@ -19,29 +20,19 @@ export function QuickScanInput() {
 
     setIsLoading(true);
     try {
-      // Mock API call since this is a stub
-      const res = await fetch('/api/scans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platform: 'instagram', handle }),
+      const data = await apiClient.post<{ id: string }>('/api/scans', {
+        platform: 'instagram',
+        handle,
       });
 
-      if (!res.ok) {
-        if (res.status === 402) {
-          const errorData = await res.json();
-          if (errorData.error?.code === 'SCAN_LIMIT_REACHED') {
-            setLimitDetails(errorData.error.details);
-            setShowUpgradeWall(true);
-            return;
-          }
-        }
-        throw new Error('Failed to start scan');
-      }
-
-      const data = await res.json();
       router.push(`/reports/${data.id}`);
     } catch (error: any) {
-      toast.error(error.message);
+      if (error instanceof ApiClientError && error.status === 402 && error.error.code === 'SCAN_LIMIT_REACHED') {
+        setLimitDetails(error.error.details as any);
+        setShowUpgradeWall(true);
+        return;
+      }
+      toast.error(error.message || 'Failed to start scan');
     } finally {
       setIsLoading(false);
     }
