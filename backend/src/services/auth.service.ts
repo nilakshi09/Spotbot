@@ -126,60 +126,79 @@ export function createAuthService(fastify: FastifyInstance) {
     },
 
     async refresh(refreshToken: string) {
-      if (!refreshToken) {
-        throw new UnauthorizedError('Invalid refresh token');
-      }
+      try {
+        // Hash the incoming token
+        const tokenHash = crypto
+          .createHash('sha256')
+          .update(refreshToken)
+          .digest('hex');
 
-      const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+        // Find token in DB
+        const storedToken = await db.query.refreshTokens.findFirst({
+          where: and(
+            eq(schema.refreshTokens.tokenHash, tokenHash),
+            eq(schema.refreshTokens.revoked, false)
+          ),
+        });
 
-      const [rt] = await db.select().from(schema.refreshTokens).where(
-        and(
-          eq(schema.refreshTokens.tokenHash, tokenHash),
-          eq(schema.refreshTokens.revoked, false)
-        )
-      ).limit(1);
+        if (!storedToken) {
+          throw new UnauthorizedError('Invalid refresh token');
+        }
 
-      if (!rt || rt.expiresAt < new Date()) {
-        throw new UnauthorizedError('Invalid refresh token');
-      }
+        if (new Date(storedToken.expiresAt) < new Date()) {
+          throw new UnauthorizedError('Refresh token expired');
+        }
 
-      await db.transaction(async (tx) => {
-        // Revoke the old token
-        await tx.update(schema.refreshTokens)
+        // Get user
+        const user = await db.query.users.findFirst({
+          where: eq(schema.users.id, storedToken.userId),
+        });
+
+        if (!user) {
+          throw new UnauthorizedError('User not found');
+        }
+
+        // Get org
+        const org = await db.query.organizations.findFirst({
+          where: eq(schema.organizations.id, user.organizationId),
+        });
+
+        if (!org) {
+          throw new UnauthorizedError('Organization not found');
+        }
+
+        // Revoke old token
+        await db.update(schema.refreshTokens)
           .set({ revoked: true })
-          .where(eq(schema.refreshTokens.id, rt.id));
-      });
+          .where(eq(schema.refreshTokens.id, storedToken.id));
 
-      const user = await db.query.users.findFirst({
-        where: eq(schema.users.id, rt.userId)
-      });
+        // Generate new tokens
+        const payload = {
+          sub: user.id,
+          email: user.email,
+          orgId: user.organizationId,
+          role: user.role,
+          plan: org.plan,
+        };
 
-      if (!user) throw new UnauthorizedError('User not found');
+        const newAccessToken = fastify.jwt.sign(payload);
+        const newRefreshToken = crypto.randomUUID();
+        const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
 
-      const [org] = await db.select().from(schema.organizations).where(eq(schema.organizations.id, user.organizationId));
+        await db.insert(schema.refreshTokens).values({
+          userId: user.id,
+          tokenHash: newTokenHash,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        });
 
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        orgId: user.organizationId,
-        role: user.role,
-        plan: org ? org.plan : 'free',
-      };
-
-      const newAccessToken = fastify.jwt.sign(payload);
-      const newRefreshToken = crypto.randomUUID();
-      const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
-
-      await db.insert(schema.refreshTokens).values({
-        userId: user.id,
-        tokenHash: newTokenHash,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      });
-
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
+        return {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        };
+      } catch (error) {
+        if (error instanceof UnauthorizedError) throw error;
+        throw new UnauthorizedError('Invalid refresh token');
+      }
     },
 
     async forgotPassword(email: string) {
