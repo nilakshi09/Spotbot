@@ -5,3 +5,4 @@ export * from './password_reset_tokens.js';
 export * from './scans.js';
 export * from './reports.js';
 export * from './billing-events.js';
+export * from './relations.js';
