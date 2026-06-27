@@ -2,6 +2,13 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { createAuthService } from '../services/auth.service.js';
 import { env } from '../config/env.js';
+import { teamService } from '../services/team.service.js';
+import { db } from '../db/client.js';
+import { users } from '../db/schema/users.js';
+import { organizations } from '../db/schema/organizations.js';
+import { eq } from 'drizzle-orm';
+import { googleOAuthService } from '../services/google-oauth.service.js';
+import { AppError } from '../middleware/error-handler.js';
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -113,4 +120,138 @@ export default async function authRoutes(app: FastifyInstance) {
     reply.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Logged out' };
   });
+
+  // GET /api/auth/invite/:token
+  // Get invitation details before accepting
+  // No auth required
+  app.get('/invite/:token', async (req, reply) => {
+    const { token } = z.object({ token: z.string().length(64) }).parse(req.params);
+    const details = await teamService.getInvitationDetails(token);
+    return reply.send(details);
+  });
+
+  // POST /api/auth/invite/accept
+  // Accept invitation and create account
+  // No auth required
+  app.post('/invite/accept', async (req, reply) => {
+    const { token, name, password } = z.object({
+      token: z.string().length(64),
+      name: z.string().min(2).max(100),
+      password: z.string().min(8),
+    }).parse(req.body);
+
+    const result = await teamService.acceptInvitation(token, name, password);
+
+    // If new user, auto-login and return tokens
+    if (result.isNewUser) {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, result.userId),
+      });
+      const org = await db.query.organizations.findFirst({
+        where: eq(organizations.id, user!.organizationId),
+      });
+
+      const tokens = await authService.generateTokenPair(user!, org!);
+
+      reply.setCookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/api/auth/refresh',
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      });
+
+      return reply.send({
+        accessToken: tokens.accessToken,
+        user: tokens.user,
+        isNewUser: true,
+        redirectTo: '/dashboard',
+      });
+    }
+
+    // Existing user — redirect to login
+    return reply.send({
+      isNewUser: false,
+      redirectTo: '/login?invited=true',
+    });
+  });
+
+  app.get('/google', async (req, reply) => {
+    if (!env.GOOGLE_CLIENT_ID) {
+      throw new AppError(
+        501,
+        'Google OAuth is not configured',
+        'GOOGLE_AUTH_NOT_CONFIGURED'
+      );
+    }
+
+    const redirectUri = `${env.BACKEND_URL ?? 'http://localhost:8000'}/api/auth/google/callback`;
+
+    const params = new URLSearchParams({
+      client_id: env.GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'online',
+      prompt: 'select_account',
+    });
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+
+    return reply.redirect(googleAuthUrl);
+  });
+
+  app.get('/google/callback', async (req, reply) => {
+    const { code, error } = req.query as {
+      code?: string;
+      error?: string;
+    };
+
+    const redirectUri = `${env.BACKEND_URL ?? 'http://localhost:8000'}/api/auth/google/callback`;
+
+    if (error) {
+      return reply.redirect(`${env.FRONTEND_URL}/login?error=google_denied`);
+    }
+
+    if (!code) {
+      return reply.redirect(`${env.FRONTEND_URL}/login?error=google_failed`);
+    }
+
+    try {
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: env.GOOGLE_CLIENT_ID!,
+          client_secret: env.GOOGLE_CLIENT_SECRET!,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      const tokenData = (await tokenResponse.json()) as any;
+
+      if (!tokenData.access_token) {
+        throw new Error('No access token received from Google');
+      }
+
+      const result = await googleOAuthService.handleCallback(
+        tokenData.access_token,
+        authService
+      );
+
+      const params = new URLSearchParams({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        isNewUser: String(result.isNewUser),
+      });
+
+      return reply.redirect(`${env.FRONTEND_URL}/auth/google/success?${params}`);
+    } catch (err: any) {
+      req.log.error({ err }, 'Google OAuth callback failed');
+      return reply.redirect(`${env.FRONTEND_URL}/login?error=google_failed`);
+    }
+  });
 }
+

@@ -1,7 +1,8 @@
 import { db } from '../db/client.js';
 import { scans } from '../db/schema/scans.js';
 import { organizations } from '../db/schema/organizations.js';
-import { eq, and, sql, desc, ilike, gte, lte } from 'drizzle-orm';
+import { users } from '../db/schema/users.js';
+import { eq, and, sql, desc, asc, ilike, gte, lte, inArray, SQL } from 'drizzle-orm';
 import { redis } from '../config/redis.js';
 import { scanQueue } from '../jobs/queue.js';
 import { quotaService } from './quota.service.js';
@@ -10,12 +11,18 @@ import { AppError, NotFoundError } from '../middleware/error-handler.js';
 
 export class ScanService {
   async createScan(userId: string, orgId: string, platform: 'instagram' | 'youtube', handle: string) {
-    if (platform !== 'instagram') {
-      throw new Error("Platform not supported");
+    // Validate handle format based on platform
+    const cleanHandle = handle.replace(/^@/, '');
+    const handleRegex = platform === 'youtube'
+      ? /^[a-zA-Z0-9._-]{1,100}$/   // YouTube handles are more flexible
+      : /^[a-zA-Z0-9._]{1,30}$/;    // Instagram handles
+
+    if (!handleRegex.test(cleanHandle)) {
+      throw new AppError(400, `Invalid ${platform} handle format`, 'VALIDATION_ERROR');
     }
 
     // 1. Normalize handle (lowercase, strip @ prefix)
-    const normalizedHandle = handle.toLowerCase().replace(/^@/, '');
+    const normalizedHandle = cleanHandle.toLowerCase();
 
     // 2. Check Redis cache (key: scan:{platform}:{handle})
     const cached = await redis.get(`scan:${platform}:${normalizedHandle}`);
@@ -66,16 +73,31 @@ export class ScanService {
     }
   }
 
-  async getScan(scanId: string, userId: string) {
+  async getScan(scanId: string, userId: string, orgId?: string, role?: string) {
+    const isAdmin = role === 'admin';
+
+    let condition: SQL;
+    if (isAdmin && orgId) {
+      condition = and(
+        eq(scans.id, scanId),
+        inArray(
+          scans.userId,
+          db.select({ id: users.id }).from(users).where(eq(users.organizationId, orgId))
+        )
+      )!;
+    } else {
+      condition = and(eq(scans.id, scanId), eq(scans.userId, userId))!;
+    }
+
     const scan = await db.select().from(scans)
-      .where(and(eq(scans.id, scanId), eq(scans.userId, userId)))
+      .where(condition)
       .limit(1);
 
     if (!scan[0]) throw new NotFoundError('Scan not found or unauthorized');
     return scan[0];
   }
 
-  async listScans(userId: string, filters: {
+  async listScans(userId: string, orgId: string, role: string, filters: {
     platform?: string;
     riskLevel?: string;
     page?: number;
@@ -86,12 +108,26 @@ export class ScanService {
     scoreMin?: number;
     scoreMax?: number;
     status?: string;
+    orderBy?: 'created_at' | 'fraud_score' | 'handle';
+    order?: 'asc' | 'desc';
   }) {
     const page = filters.page || 1;
     const limit = filters.limit || 20;
     const offset = (page - 1) * limit;
 
-    const conditions = [eq(scans.userId, userId)];
+    const isAdmin = role === 'admin';
+
+    let baseCondition: SQL;
+    if (isAdmin && orgId) {
+      baseCondition = inArray(
+        scans.userId,
+        db.select({ id: users.id }).from(users).where(eq(users.organizationId, orgId))
+      )!;
+    } else {
+      baseCondition = eq(scans.userId, userId)!;
+    }
+
+    const conditions = [baseCondition];
     if (filters.platform) conditions.push(eq(scans.platform, filters.platform as any));
     if (filters.riskLevel) conditions.push(eq(scans.riskLevel, filters.riskLevel as any));
     if (filters.status) conditions.push(eq(scans.status, filters.status as any));
@@ -101,9 +137,17 @@ export class ScanService {
     if (filters.scoreMin !== undefined) conditions.push(gte(scans.fraudScore, filters.scoreMin));
     if (filters.scoreMax !== undefined) conditions.push(lte(scans.fraudScore, filters.scoreMax));
 
+    const orderByMap: Record<string, any> = {
+      created_at: scans.createdAt,
+      fraud_score: scans.fraudScore,
+      handle: scans.handle,
+    };
+    const orderByCol = orderByMap[filters.orderBy ?? 'created_at'] || scans.createdAt;
+    const orderDir = filters.order === 'asc' ? asc : desc;
+
     const data = await db.select().from(scans)
       .where(and(...conditions))
-      .orderBy(desc(scans.createdAt))
+      .orderBy(orderDir(orderByCol))
       .limit(limit).offset(offset);
     
     // Count query

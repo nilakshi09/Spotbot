@@ -63,3 +63,56 @@ export async function sendPaymentFailedEmail(
     `,
   });
 }
+
+export async function sendInvitationEmail(
+  toEmail: string,
+  inviterName: string,
+  orgName: string,
+  inviteUrl: string,
+  role: string,
+) {
+  if (env.NODE_ENV === 'development' || env.NODE_ENV === 'test') {
+    console.log(`\n📧 [EMAIL MOCK] Invitation to ${toEmail} from ${inviterName}:\n${inviteUrl}\n`);
+    if (!env.RESEND_API_KEY.startsWith('re_')) {
+      return;
+    }
+  }
+
+  await resend.emails.send({
+    from: 'Spotbot <onboarding@resend.dev>', // Should use a verified domain in production, using resend.dev for test according to user spec
+    to: toEmail,
+    subject: `${inviterName} invited you to join ${orgName} on Spotbot`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #6366f1;">You're invited to Spotbot</h2>
+        <p>
+          <strong>${inviterName}</strong> has invited you to join
+          <strong>${orgName}</strong> as a ${role} on Spotbot —
+          the influencer fraud detection platform for agencies.
+        </p>
+        <p>Click the button below to accept your invitation and
+          create your account:</p>
+        <a href="${inviteUrl}"
+          style="
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 16px 0;
+          ">
+          Accept Invitation →
+        </a>
+        <p style="color: #6b7280; font-size: 14px;">
+          This invitation expires in 48 hours.
+          If you did not expect this invitation, you can safely ignore it.
+        </p>
+        <p style="color: #6b7280; font-size: 12px;">
+          Or copy this link: ${inviteUrl}
+        </p>
+      </div>
+    `,
+  });
+}

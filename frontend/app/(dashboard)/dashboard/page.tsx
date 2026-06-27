@@ -1,11 +1,23 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, Activity, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { TrialNudgeBanner } from "@/components/billing/trial-nudge-banner";
+import { useAnalytics } from '@/hooks/use-analytics';
+import { useScans } from '@/hooks/use-scans';
+import type { ScanFilters } from '@/types/scan';
+import { RiskDistributionChart } from '@/components/dashboard/risk-distribution-chart';
+import { ScanVolumeChart } from '@/components/dashboard/scan-volume-chart';
+import { AvgScoreChart } from '@/components/dashboard/avg-score-chart';
+import { PlatformDistributionChart } from '@/components/dashboard/platform-distribution-chart';
+import { ScanSearch } from '@/components/dashboard/scan-search';
+import RecentScansTable from '@/components/dashboard/recent-scans-table';
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -19,6 +31,26 @@ const fadeUp = {
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data: stats } = useDashboardStats();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  const { data: analytics, isLoading: analyticsLoading } = useAnalytics();
+
+  const [scanFilters, setScanFilters] = useState<ScanFilters>({
+    page: 1,
+    limit: 10,
+    status: 'completed',
+  });
+
+  const { data: scansData, isLoading: scansLoading } = useScans(scanFilters);
+
+  useEffect(() => {
+    if (searchParams.get('welcome') === 'true') {
+      toast.success('Welcome to Spotbot! Your account is ready.');
+      // Remove query param
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [searchParams, toast]);
   
   if (!user) return null;
 
@@ -47,69 +79,63 @@ export default function DashboardPage() {
         <TrialNudgeBanner trial={stats.trial} />
       )}
 
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-        initial="initial"
-        animate="animate"
-        variants={{
-          animate: { transition: { staggerChildren: 0.1 } }
-        }}
-      >
-        <motion.div variants={fadeUp} className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/5 text-cyan-500 flex items-center justify-center opacity-50">
-              <Search className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-medium text-muted">Total Scans</h3>
-          </div>
-          <p className="text-3xl font-bold text-white/30">—</p>
-          <p className="text-xs text-muted/50 mt-2">No data yet</p>
-        </motion.div>
-
-        <motion.div variants={fadeUp} className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/5 text-cyan-500 flex items-center justify-center opacity-50">
-              <Activity className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-medium text-muted">Avg Fraud Score</h3>
-          </div>
-          <p className="text-3xl font-bold text-white/30">—</p>
-          <p className="text-xs text-muted/50 mt-2">No data yet</p>
-        </motion.div>
-
-        <motion.div variants={fadeUp} className="bg-[#0d1117] border border-white/10 rounded-xl p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-full bg-danger/5 text-danger flex items-center justify-center opacity-50">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-medium text-muted">High-Risk Count</h3>
-          </div>
-          <p className="text-3xl font-bold text-white/30">—</p>
-          <p className="text-xs text-muted/50 mt-2">No data yet</p>
-        </motion.div>
-      </motion.div>
-
-      <motion.div 
-        {...fadeUp} transition={{ delay: 0.3, ...fadeUp.transition }}
-        className="border-2 border-dashed border-white/10 rounded-2xl p-12 text-center bg-[#0d1117]/30"
-      >
-        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6 text-muted/30">
-          <Search className="w-8 h-8" />
-        </div>
-        <h2 className="text-xl font-medium text-white mb-2">
-          You haven't run any scans yet
+      {/* Analytics Section */}
+      <div className="mb-12">
+        <h2 className="text-lg font-semibold text-white mb-4">
+          Analytics
+          <span className="text-sm font-normal text-gray-500 ml-2">
+            Last 30 days
+          </span>
         </h2>
-        <p className="text-muted text-sm max-w-md mx-auto mb-8">
-          Run your first scan to instantly analyze an Instagram or YouTube handle's audience authenticity.
-        </p>
-        <Link 
-          href="/scan"
-          className="inline-flex items-center gap-2 bg-cyan-500 text-black font-bold text-sm px-6 py-3 rounded-xl hover:bg-cyan-400 hover:scale-105 transition-all glow-teal"
-        >
-          <Search className="w-4 h-4" />
-          Run Your First Scan
-        </Link>
-      </motion.div>
+
+        {/* 2x2 grid on desktop, 1 col on mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ScanVolumeChart
+            data={analytics?.scanVolumeByDay ?? []}
+            isLoading={analyticsLoading}
+          />
+          <RiskDistributionChart
+            data={analytics?.riskDistribution ?? { low: 0, medium: 0, high: 0 }}
+            isLoading={analyticsLoading}
+          />
+          <AvgScoreChart
+            data={analytics?.avgScoreByDay ?? []}
+            isLoading={analyticsLoading}
+          />
+          <PlatformDistributionChart
+            data={analytics?.platformDistribution ?? { instagram: 0, youtube: 0 }}
+            isLoading={analyticsLoading}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">
+            Recent Scans
+          </h2>
+          <Link href="/reports"
+            className="text-sm text-indigo-400 hover:text-indigo-300">
+            View all →
+          </Link>
+        </div>
+
+        {/* Search and filters */}
+        <div className="mb-4">
+          <ScanSearch
+            filters={scanFilters}
+            onFiltersChange={setScanFilters}
+          />
+        </div>
+
+        {scansLoading ? (
+          <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-16 text-center">
+            <span className="w-8 h-8 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin inline-block" />
+          </div>
+        ) : (
+          <RecentScansTable scans={scansData?.data ?? []} />
+        )}
+      </div>
     </div>
   );
 }

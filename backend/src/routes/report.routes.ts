@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import crypto from 'crypto';
 import { db } from '../db/client.js';
 import { scans } from '../db/schema/scans.js';
 import { reports } from '../db/schema/reports.js';
@@ -8,59 +7,40 @@ import { eq, and } from 'drizzle-orm';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
 import { PdfService } from '../services/pdf.service.js';
 import { ScanService } from '../services/scan.service.js';
+import { reportShareService } from '../services/report-share.service.js';
 import { env } from '../config/env.js';
+import { redis } from '../config/redis.js';
+import { AppError } from '../middleware/error-handler.js';
 
 const pdfService = new PdfService();
 const scanService = new ScanService();
 
 const ShareSchema = z.object({
-  expiresInDays: z.number().min(1).max(30).default(7),
+  expiresInDays: z.number().int().min(1).max(30).default(7),
 });
 
+// ─── Rate Limiting Helper ──────────────────────────────────────────────────
+// Prevent abuse — max 10 share links per user per hour
+
+async function checkShareRateLimit(userId: string): Promise<void> {
+  const key = `share:ratelimit:${userId}`;
+  const count = await redis.incr(key);
+
+  if (count === 1) {
+    // First request — set expiry of 1 hour
+    await redis.expire(key, 3600);
+  }
+
+  if (count > 10) {
+    throw new AppError(
+      429,
+      'Too many share links generated. Please wait before creating more.',
+      'RATE_LIMITED',
+    );
+  }
+}
+
 export default async function reportRoutes(app: FastifyInstance) {
-  // Public endpoint (no auth)
-  app.get('/public/reports/:token', async (request: FastifyRequest<{ Params: { token: string } }>, reply: FastifyReply) => {
-    const { token } = request.params;
-    const reportData = await db.select().from(reports).where(eq(reports.shareToken, token)).limit(1);
-
-    if (!reportData[0]) {
-      return reply.status(404).send({ error: 'Report not found' });
-    }
-
-    if (reportData[0].shareExpiresAt && new Date() > reportData[0].shareExpiresAt) {
-      return reply.status(404).send({ error: 'This report has expired' });
-    }
-
-    // Increment viewCount
-    await db.update(reports)
-      .set({ viewCount: reportData[0].viewCount + 1 })
-      .where(eq(reports.id, reportData[0].id));
-
-    // Fetch scan data
-    const scanData = await db.select().from(scans).where(eq(scans.id, reportData[0].scanId)).limit(1);
-    const scan = scanData[0];
-
-    return reply.send({
-      id: scan.id,
-      status: scan.status,
-      platform: scan.platform,
-      handle: scan.handle,
-      fraudScore: scan.fraudScore || 0,
-      riskLevel: scan.riskLevel || 'low',
-      realReach: scan.realReach || 0,
-      cached: false,
-      dataQuality: 'full',
-      riskSummary: 'Analysis complete based on multiple signals',
-      profile: scan.profileData || {
-        displayName: '', followers: 0, following: 0, posts: 0, bio: '', profilePictureUrl: '', isVerified: false, category: ''
-      },
-      signals: scan.subScores || {},
-      followerHistory: (scan.rawData as any)?.followerHistory || [],
-      createdAt: scan.createdAt,
-      expiresAt: scan.expiresAt
-    });
-  });
-
   // Protected endpoints
   app.register(async (protectedApp) => {
     protectedApp.addHook('onRequest', verifyAccessToken);
@@ -133,39 +113,51 @@ export default async function reportRoutes(app: FastifyInstance) {
       return reply.redirect(pdfUrl);
     });
 
+    // ─── POST /api/reports/:scanId/share ──────────────────────────────────
+    // Generate a public share link for a report
     protectedApp.post('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
       const userId = (request.user as any).sub;
       const { scanId } = request.params;
       const body = ShareSchema.parse(request.body);
 
-      const scan = await scanService.getScan(scanId, userId);
-      if (scan.status !== 'completed') {
-        return reply.status(409).send({ error: 'Scan not yet completed' });
-      }
+      // Rate limit: max 10 share links per user per hour
+      await checkShareRateLimit(userId);
 
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + body.expiresInDays);
+      const result = await reportShareService.generateShareLink(
+        scanId,
+        userId,
+        body.expiresInDays,
+      );
 
-      const reportData = await db.select().from(reports).where(eq(reports.scanId, scanId)).limit(1);
+      return reply.status(201).send(result);
+    });
 
-      if (reportData[0]) {
-        await db.update(reports)
-          .set({ shareToken: token, shareExpiresAt: expiresAt })
-          .where(eq(reports.scanId, scanId));
-      } else {
-        await db.insert(reports).values({
-          scanId,
-          shareToken: token,
-          shareExpiresAt: expiresAt
-        });
-      }
+    // ─── DELETE /api/reports/:scanId/share ────────────────────────────────
+    // Revoke an existing share link
+    protectedApp.delete('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
+      const userId = (request.user as any).sub;
+      const { scanId } = request.params;
 
-      return reply.send({
-        shareUrl: `${env.FRONTEND_URL}/public/reports/${token}`,
-        token,
-        expiresAt: expiresAt.toISOString()
-      });
+      const result = await reportShareService.revokeShareLink(
+        scanId,
+        userId,
+      );
+
+      return reply.send(result);
+    });
+
+    // ─── GET /api/reports/:scanId/share ───────────────────────────────────
+    // Get current share status for a report
+    protectedApp.get('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
+      const userId = (request.user as any).sub;
+      const { scanId } = request.params;
+
+      const status = await reportShareService.getShareStatus(
+        scanId,
+        userId,
+      );
+
+      return reply.send(status);
     });
   });
 }

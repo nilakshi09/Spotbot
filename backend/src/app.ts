@@ -14,6 +14,8 @@ import userRoutes from './routes/user.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import billingRoutes from './routes/billing.routes.js';
 import scanRoutes from './routes/scan.routes.js';
+import publicRoutes from './routes/public.routes.js';
+import orgRoutes from './routes/org.routes.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -80,12 +82,14 @@ export async function buildApp() {
   startMetricsLogging();
 
   // Routes
+  await app.register(publicRoutes, { prefix: '/api/public' });
   await app.register(healthRoutes, { prefix: '/api' });
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(scanRoutes, { prefix: '/api/scans' });
   await app.register(userRoutes, { prefix: '/api/users' });
   await app.register(reportRoutes, { prefix: '/api' });
   await app.register(billingRoutes, { prefix: '/api/billing' });
+  await app.register(orgRoutes, { prefix: '/api/org' });
 
   return app;
 }

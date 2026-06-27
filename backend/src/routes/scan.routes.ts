@@ -4,13 +4,17 @@ import { ScanService } from '../services/scan.service.js';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
 import { checkScanQuota } from '../middleware/quota.middleware.js';
 import { ScanLimitError } from '../middleware/quota.middleware.js';
+import { db } from '../db/client.js';
+import { reports } from '../db/schema/reports.js';
+import { eq } from 'drizzle-orm';
+import { env } from '../config/env.js';
 
 const scanService = new ScanService();
 import { redis } from '../config/redis.js';
 
 const CreateScanSchema = z.object({
-  platform: z.literal('instagram'),
-  handle: z.string().min(1).max(100).regex(/^@?[a-zA-Z0-9._]+$/),
+  platform: z.enum(['instagram', 'youtube']),
+  handle: z.string().min(1).max(100).regex(/^@?[a-zA-Z0-9._-]+$/),
 });
 
 const ListScansSchema = z.object({
@@ -24,6 +28,8 @@ const ListScansSchema = z.object({
   scoreMin: z.coerce.number().min(0).max(100).optional(),
   scoreMax: z.coerce.number().min(0).max(100).optional(),
   status: z.enum(['pending', 'processing', 'completed', 'failed']).optional(),
+  orderBy: z.enum(['created_at', 'fraud_score', 'handle']).optional(),
+  order: z.enum(['asc', 'desc']).optional(),
 });
 
 export default async function scanRoutes(app: FastifyInstance) {
@@ -62,11 +68,27 @@ export default async function scanRoutes(app: FastifyInstance) {
 
   app.get('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
+    const role = (request.user as any).role;
     const scanId = request.params.id;
 
-    const scan = await scanService.getScan(scanId, userId);
+    const scan = await scanService.getScan(scanId, userId, orgId, role);
 
     if (scan.status === 'completed') {
+      // Fetch share status for completed scans
+      const reportData = await db.select({
+        shareToken: reports.shareToken,
+        shareExpiresAt: reports.shareExpiresAt,
+        viewCount: reports.viewCount,
+      }).from(reports).where(eq(reports.scanId, scan.id)).limit(1);
+
+      const report = reportData[0];
+      const isShared = !!(
+        report?.shareToken &&
+        report?.shareExpiresAt &&
+        new Date(report.shareExpiresAt) > new Date()
+      );
+
       return reply.send({
         id: scan.id,
         status: scan.status,
@@ -84,7 +106,15 @@ export default async function scanRoutes(app: FastifyInstance) {
         signals: scan.subScores || {},
         followerHistory: (scan.rawData as any)?.followerHistory || [],
         createdAt: scan.createdAt,
-        expiresAt: scan.expiresAt
+        expiresAt: scan.expiresAt,
+        shareStatus: {
+          isShared,
+          shareUrl: isShared
+            ? `${env.FRONTEND_URL}/public/reports/${report!.shareToken}`
+            : null,
+          expiresAt: report?.shareExpiresAt?.toISOString() ?? null,
+          viewCount: report?.viewCount ?? 0,
+        },
       });
     } else if (scan.status === 'processing' || scan.status === 'pending') {
       const progressRaw = await redis.get(`scan:progress:${scan.id}`);
@@ -117,9 +147,11 @@ export default async function scanRoutes(app: FastifyInstance) {
 
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
+    const role = (request.user as any).role;
     const query = ListScansSchema.parse(request.query);
 
-    const result = await scanService.listScans(userId, query);
+    const result = await scanService.listScans(userId, orgId, role, query);
     return reply.send(result);
   });
 

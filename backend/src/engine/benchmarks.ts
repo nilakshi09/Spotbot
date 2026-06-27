@@ -61,3 +61,69 @@ export function detectNiche(bio: string, category: string): string {
   }
   return 'general';
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// YouTube-specific engagement benchmarks
+// YouTube ER = (likes + comments) / views * 100
+// (Different from Instagram which uses followers)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const YOUTUBE_BENCHMARKS: Record<string, Record<string, number>> = {
+  gaming: {
+    nano: 8.0,   // < 10K subs
+    micro: 5.5,  // 10K-100K
+    mid: 4.0,    // 100K-500K
+    macro: 3.0,  // 500K-2M
+    mega: 2.0,   // 2M+
+  },
+  tech: {
+    nano: 6.0, micro: 4.5, mid: 3.5, macro: 2.5, mega: 1.8,
+  },
+  education: {
+    nano: 7.0, micro: 5.0, mid: 3.8, macro: 2.8, mega: 2.0,
+  },
+  entertainment: {
+    nano: 7.5, micro: 5.5, mid: 4.2, macro: 3.0, mega: 2.2,
+  },
+  music: {
+    nano: 6.5, micro: 4.8, mid: 3.5, macro: 2.5, mega: 1.5,
+  },
+  fitness: {
+    nano: 7.0, micro: 5.2, mid: 4.0, macro: 3.0, mega: 2.0,
+  },
+  food: {
+    nano: 7.5, micro: 5.5, mid: 4.2, macro: 3.2, mega: 2.2,
+  },
+  travel: {
+    nano: 7.0, micro: 5.0, mid: 3.8, macro: 2.8, mega: 1.8,
+  },
+  beauty: {
+    nano: 7.0, micro: 5.2, mid: 4.0, macro: 3.0, mega: 2.0,
+  },
+  finance: {
+    nano: 5.5, micro: 4.0, mid: 3.0, macro: 2.2, mega: 1.5,
+  },
+  general: {
+    nano: 7.0, micro: 5.0, mid: 3.8, macro: 2.8, mega: 1.8,
+  },
+};
+
+// Get YouTube subscriber tier
+export function getYouTubeSubscriberTier(subscribers: number): string {
+  if (subscribers < 10_000) return 'nano';
+  if (subscribers < 100_000) return 'micro';
+  if (subscribers < 500_000) return 'mid';
+  if (subscribers < 2_000_000) return 'macro';
+  return 'mega';
+}
+
+// Get YouTube benchmark ER for a channel
+export function getYouTubeBenchmark(
+  niche: string,
+  subscribers: number,
+): number {
+  const tier = getYouTubeSubscriberTier(subscribers);
+  const nicheBenchmarks =
+    YOUTUBE_BENCHMARKS[niche] ?? YOUTUBE_BENCHMARKS.general;
+  return nicheBenchmarks[tier] ?? 3.8;
+}

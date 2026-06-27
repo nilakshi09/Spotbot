@@ -1,12 +1,15 @@
 import { InstagramClient } from '../integrations/instagram.client.js';
 import { SocialBladeClient } from '../integrations/socialblade.client.js';
 import { OpenAIClient } from '../integrations/openai.client.js';
+import { YouTubeClient } from '../integrations/youtube.client.js';
+import { mapYouTubeProfile, mapYouTubePosts, mapYouTubeComments } from '../integrations/youtube.mapper.js';
 import { FraudAnalysisResult } from './types.js';
 import { GrowthVelocityAnalyzer } from './analyzers/growth-velocity.js';
 import { EngagementBenchmarkAnalyzer } from './analyzers/engagement-benchmark.js';
 import { CommentSentimentAnalyzer } from './analyzers/comment-sentiment.js';
 import { SpikeDetectionAnalyzer } from './analyzers/spike-detection.js';
 import { computeCompositeScore, classifyRisk, estimateRealReach, generateRiskSummary } from './scoring.js';
+import { getYouTubeBenchmark } from './benchmarks.js';
 
 export class FraudEngine {
   constructor(
@@ -16,10 +19,15 @@ export class FraudEngine {
   ) {}
 
   async analyze(platform: 'instagram' | 'youtube', handle: string): Promise<FraudAnalysisResult> {
-    if (platform !== 'instagram') {
-      throw new Error(`Platform ${platform} is not supported in this phase`);
+    if (platform === 'youtube') {
+      return this.analyzeYouTube(handle);
     }
 
+    return this.analyzeInstagram(handle);
+  }
+
+  // ── Instagram analysis (existing logic, unchanged) ──────────────────────
+  private async analyzeInstagram(handle: string): Promise<FraudAnalysisResult> {
     // 1. Fetch all data (parallel where possible)
     // We fetch profile first because if it fails, we cannot proceed
     const profile = await this.instagram.getProfile(handle);
@@ -66,6 +74,58 @@ export class FraudEngine {
       summary,
       signals,
       profile
+    };
+  }
+
+  // ── YouTube analysis (new) ──────────────────────────────────────────────
+  private async analyzeYouTube(handle: string): Promise<FraudAnalysisResult> {
+    const youtube = new YouTubeClient();
+
+    // 1. Fetch YouTube data
+    const channel = await youtube.getChannel(handle);
+    const videos = await youtube.getRecentVideos(channel.channelId, 20);
+    const comments = await youtube.getComments(channel.channelId, 5);
+
+    // 2. Map to unified format
+    const profile = mapYouTubeProfile(channel);
+    const mappedPosts = mapYouTubePosts(videos);
+    const mappedComments = mapYouTubeComments(comments);
+
+    // 3. Run analyzers
+    // Growth velocity and spike detection use subscriber history.
+    // For YouTube, Social Blade also tracks subscriber history.
+    // If unavailable, these signals have reduced confidence.
+    const growthVelocityAnalyzer = new GrowthVelocityAnalyzer();
+    const engagementBenchmarkAnalyzer = new EngagementBenchmarkAnalyzer();
+    const commentSentimentAnalyzer = new CommentSentimentAnalyzer(this.openai);
+    const spikeDetectionAnalyzer = new SpikeDetectionAnalyzer();
+
+    const [growthVelocity, engagementRate, commentSentiment, spikeDetection] =
+      await Promise.all([
+        Promise.resolve(growthVelocityAnalyzer.analyze([])),  // no history available
+        Promise.resolve(engagementBenchmarkAnalyzer.analyzeYouTube(
+          channel,
+          videos,
+          getYouTubeBenchmark(profile.category, channel.subscribers),
+        )),
+        commentSentimentAnalyzer.analyze(mappedComments),
+        Promise.resolve(spikeDetectionAnalyzer.analyze([], mappedPosts)),
+      ]);
+
+    const signals = { growthVelocity, engagementRate, commentSentiment, spikeDetection };
+
+    const fraudScore = computeCompositeScore(signals);
+    const riskLevel = classifyRisk(fraudScore);
+    const realReach = estimateRealReach(channel.subscribers, fraudScore);
+    const summary = generateRiskSummary(fraudScore, riskLevel, signals);
+
+    return {
+      fraudScore,
+      riskLevel,
+      realReach,
+      summary,
+      signals,
+      profile,
     };
   }
 }

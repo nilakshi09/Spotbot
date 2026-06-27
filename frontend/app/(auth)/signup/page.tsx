@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -62,6 +63,19 @@ export default function SignupPage() {
           Create your account
         </h1>
         <p className="text-muted text-sm mt-1">Start detecting influencer fraud in 60 seconds</p>
+      </div>
+
+      <GoogleSignInButton label="Sign up with Google" />
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/10" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-[#0a0a0a] px-3 text-muted">
+            or sign up with email
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">

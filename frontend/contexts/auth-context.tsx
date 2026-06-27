@@ -12,6 +12,8 @@ export interface User {
   role: 'admin' | 'member';
   orgId: string;
   plan: string;
+  hasGoogleAuth?: boolean;
+  avatarUrl?: string;
 }
 
 interface AuthContextType {
@@ -19,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -40,13 +43,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Decode user from JWT (naive decoding for frontend context)
         const payloadStr = accessToken.split('.')[1];
         const decoded = JSON.parse(atob(payloadStr));
+        // Fetch full user profile
+        const userProfile = await apiClient.get<User>('/api/users/me');
         setUser({
           id: decoded.sub,
           email: decoded.email,
-          name: decoded.name || 'User', // Fallback if name is not in payload
+          name: decoded.name || userProfile.name || 'User',
           role: decoded.role,
           orgId: decoded.orgId,
           plan: decoded.plan,
+          hasGoogleAuth: userProfile.hasGoogleAuth,
+          avatarUrl: userProfile.avatarUrl,
         });
       } catch (err) {
         clearTokens();
@@ -64,6 +71,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(data.accessToken);
     setUser(data.user);
     router.push('/dashboard');
+  };
+
+  const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+    setAccessToken(accessToken);
+    
+    // We can fetch user profile or let next refresh handle it
+    const userProfile = await apiClient.get<User>('/api/users/me');
+    const payloadStr = accessToken.split('.')[1];
+    const decoded = JSON.parse(atob(payloadStr));
+    
+    setUser({
+      id: decoded.sub,
+      email: decoded.email,
+      name: decoded.name || userProfile.name || 'User',
+      role: decoded.role,
+      orgId: decoded.orgId,
+      plan: decoded.plan,
+      hasGoogleAuth: userProfile.hasGoogleAuth,
+      avatarUrl: userProfile.avatarUrl,
+    });
   };
 
   const signup = async (email: string, password: string, name: string) => {
@@ -85,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithTokens, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

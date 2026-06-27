@@ -5,7 +5,7 @@ import { scans } from '../db/schema/scans.js';
 import { organizations } from '../db/schema/organizations.js';
 import { users } from '../db/schema/users.js';
 import { refreshTokens } from '../db/schema/refresh_tokens.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, asc, gte, inArray } from 'drizzle-orm';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
 import { UnauthorizedError } from '../middleware/error-handler.js';
 import bcrypt from 'bcrypt';
@@ -19,6 +19,29 @@ const ChangePasswordSchema = z.object({
 
 export default async function userRoutes(app: FastifyInstance) {
   app.addHook('onRequest', verifyAccessToken);
+
+  app.get('/me', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = (request.user as any).sub;
+    const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    
+    if (!userRecord[0]) {
+      throw new UnauthorizedError('User not found');
+    }
+
+    const user = userRecord[0];
+    
+    return reply.send({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      organizationId: user.organizationId,
+      hasGoogleAuth: !!user.googleId,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+    });
+  });
 
   app.get('/me/stats', async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
@@ -116,5 +139,102 @@ export default async function userRoutes(app: FastifyInstance) {
     }
 
     return reply.send({ message: 'Account deleted' });
+  });
+
+  app.get('/me/analytics', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = (request.user as any).sub;
+    const orgId = (request.user as any).orgId;
+    const isAdmin = (request.user as any).role === 'admin';
+
+    // Get scans for the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Build where clause based on role
+    // Admin sees all org scans, member sees own
+    const userIds = isAdmin
+      ? (await db.query.users.findMany({
+          where: eq(users.organizationId, orgId),
+          columns: { id: true },
+        })).map((u: any) => u.id)
+      : [userId];
+
+    const recentScans = await db.query.scans.findMany({
+      where: and(
+        inArray(scans.userId, userIds),
+        eq(scans.status, 'completed'),
+        gte(scans.createdAt, thirtyDaysAgo)
+      ),
+      columns: {
+        id: true,
+        fraudScore: true,
+        riskLevel: true,
+        platform: true,
+        createdAt: true,
+      },
+      orderBy: [asc(scans.createdAt)],
+    });
+
+    // 1. Risk distribution
+    const riskDistribution = {
+      low: recentScans.filter((s: any) => s.riskLevel === 'low').length,
+      medium: recentScans.filter((s: any) => s.riskLevel === 'medium').length,
+      high: recentScans.filter((s: any) => s.riskLevel === 'high').length,
+    };
+
+    // 2. Scan volume by day (last 14 days)
+    const scanVolumeByDay = getLast14Days().map(date => ({
+      date,
+      count: recentScans.filter((s: any) =>
+        s.createdAt.toISOString().startsWith(date)
+      ).length,
+    }));
+
+    // 3. Average fraud score by day
+    const avgScoreByDay = getLast14Days().map(date => {
+      const dayScans = recentScans.filter((s: any) =>
+        s.createdAt.toISOString().startsWith(date)
+      );
+      const avg = dayScans.length > 0
+        ? Math.round(
+            dayScans.reduce((sum: number, s: any) => sum + (s.fraudScore ?? 0), 0)
+            / dayScans.length
+          )
+        : null;
+      return { date, avgScore: avg };
+    });
+
+    // 4. Platform distribution
+    const platformDistribution = {
+      instagram: recentScans.filter((s: any) => s.platform === 'instagram').length,
+      youtube: recentScans.filter((s: any) => s.platform === 'youtube').length,
+    };
+
+    // 5. Score distribution buckets
+    const scoreDistribution = [
+      { range: '0-20', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) <= 20).length },
+      { range: '21-40', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 20 && (s.fraudScore ?? 0) <= 40).length },
+      { range: '41-60', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 40 && (s.fraudScore ?? 0) <= 60).length },
+      { range: '61-80', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 60 && (s.fraudScore ?? 0) <= 80).length },
+      { range: '81-100', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 80).length },
+    ];
+
+    return reply.send({
+      riskDistribution,
+      scanVolumeByDay,
+      avgScoreByDay,
+      platformDistribution,
+      scoreDistribution,
+      totalScansLast30Days: recentScans.length,
+    });
+  });
+}
+
+// Helper to get last 14 days as YYYY-MM-DD strings
+function getLast14Days(): string[] {
+  return Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    return d.toISOString().split('T')[0];
   });
 }

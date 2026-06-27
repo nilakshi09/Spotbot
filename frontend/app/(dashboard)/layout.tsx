@@ -13,7 +13,8 @@ import {
   CreditCard,
   LogOut,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 
@@ -21,8 +22,8 @@ const navLinks = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "New Scan", href: "/scan", icon: Search },
   { name: "Reports", href: "/reports", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
   { name: "Billing", href: "/billing", icon: CreditCard },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -118,13 +119,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
+          
+          {user?.role === 'admin' && (
+            <Link
+              href="/settings/team"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/settings/team'
+                  ? 'bg-cyan-500/10 text-cyan-400'
+                  : 'text-[#8899aa] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className={`w-5 h-5 ${pathname === '/settings/team' ? 'text-cyan-400' : 'text-muted'}`} />
+                Team
+              </div>
+            </Link>
+          )}
         </nav>
 
         {/* User profile (bottom) */}
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-sm font-bold shrink-0">
+            <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-sm font-bold shrink-0 relative overflow-hidden">
               {getInitials(user.name)}
+              {user?.avatarUrl && (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user.name}</p>
@@ -165,9 +191,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative">
               <button 
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                className="relative w-8 h-8 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500/50 overflow-hidden"
               >
                 {getInitials(user.name)}
+                {user?.avatarUrl && (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                )}
               </button>
 
               {dropdownOpen && (

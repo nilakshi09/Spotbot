@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +15,22 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const invited = searchParams.get('invited');
+    if (error === 'google_denied') {
+      toast.info('Google sign-in was cancelled');
+    }
+    if (error === 'google_failed') {
+      toast.error('Google sign-in failed. Please try again.');
+    }
+    if (invited === 'true') {
+      toast.info('Invitation accepted! Please log in to continue.');
+    }
+  }, [searchParams, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +119,17 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/10" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-[#0a0a0a] px-3 text-muted">or</span>
+        </div>
+      </div>
+
+      <GoogleSignInButton label="Continue with Google" />
 
       <p className="mt-8 text-center text-sm text-muted">
         Don't have an account?{" "}

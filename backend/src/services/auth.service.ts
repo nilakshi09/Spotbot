@@ -71,6 +71,39 @@ export function createAuthService(fastify: FastifyInstance) {
       });
     },
 
+    async generateTokenPair(user: any, org: any) {
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        orgId: user.organizationId,
+        role: user.role,
+        plan: org.plan,
+      };
+
+      const accessToken = fastify.jwt.sign(payload);
+      const refreshToken = crypto.randomUUID();
+      const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+
+      await db.insert(schema.refreshTokens).values({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      });
+
+      return {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          orgId: org.id,
+          plan: org.plan,
+        },
+      };
+    },
+
     async login(email: string, password: string) {
       const user = await db.query.users.findFirst({
         where: eq(schema.users.email, email),
