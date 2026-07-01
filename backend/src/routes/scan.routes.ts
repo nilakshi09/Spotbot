@@ -64,7 +64,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/:id', { preHandler: [verifyJwtOrApiKey] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.get<{ Params: { id: string } }>('/:id', { preHandler: [verifyJwtOrApiKey] }, async (request, reply) => {
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const role = (request.user as any).role;
@@ -153,7 +153,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.delete('/:id', { preHandler: [verifyAccessToken] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.delete<{ Params: { id: string } }>('/:id', { preHandler: [verifyAccessToken] }, async (request, reply) => {
     const userId = (request.user as any).sub;
     const scanId = request.params.id;
 
@@ -161,7 +161,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     return reply.status(204).send();
   });
 
-  app.post('/:id/rescan', { preHandler: [verifyAccessToken] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.post<{ Params: { id: string } }>('/:id/rescan', { preHandler: [verifyAccessToken] }, async (request, reply) => {
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const scanId = request.params.id;

@@ -1,7 +1,7 @@
 import { db } from '../db/client.js'
 import { salesLeads, organizations, users } from '../db/schema/index.js'
 import { eq, desc } from 'drizzle-orm'
-import { emailService } from './email.service.js'
+import * as emailService from './email.service.js'
 import { logger } from '../utils/logger.js'
 
 export class SalesLeadService {

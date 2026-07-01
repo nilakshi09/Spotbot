@@ -20,7 +20,7 @@ export async function verifyJwtOrApiKey(
   // Try JWT first (existing middleware)
   if (authHeader?.startsWith('Bearer ')) {
     try {
-      await verifyAccessToken(req, reply)
+      await verifyAccessToken(req)
       return  // JWT valid — proceed
     } catch {
       // JWT failed — try API key if provided
