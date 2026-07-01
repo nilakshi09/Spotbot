@@ -11,14 +11,18 @@ export default async function salesLeadRoutes(
   // Auth: optional (works for logged-in and logged-out users)
   app.post('/contact', {
     schema: {
-      body: z.object({
-        companyName: z.string().min(1).max(255),
-        contactName: z.string().min(1).max(255),
-        contactEmail: z.string().email(),
-        teamSize: z.string().max(50).optional(),
-        estimatedScansPerMonth: z.string().max(50).optional(),
-        message: z.string().max(2000).optional(),
-      }),
+      body: {
+        type: 'object',
+        required: ['companyName', 'contactName', 'contactEmail'],
+        properties: {
+          companyName: { type: 'string', minLength: 1, maxLength: 255 },
+          contactName: { type: 'string', minLength: 1, maxLength: 255 },
+          contactEmail: { type: 'string', format: 'email' },
+          teamSize: { type: 'string', maxLength: 50 },
+          estimatedScansPerMonth: { type: 'string', maxLength: 50 },
+          message: { type: 'string', maxLength: 2000 },
+        },
+      },
     },
   }, async (req, reply) => {
     const data = req.body as {

@@ -143,9 +143,12 @@ export default async function userRoutes(app: FastifyInstance) {
 
   app.get('/me/analytics', {
     schema: {
-      querystring: z.object({
-        range: z.enum(['7d', '30d', '90d']).default('30d'),
-      }),
+      querystring: {
+        type: 'object',
+        properties: {
+          range: { type: 'string', enum: ['7d', '30d', '90d'], default: '30d' }
+        }
+      },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { range } = request.query as { range: '7d' | '30d' | '90d' };
@@ -276,9 +279,12 @@ export default async function userRoutes(app: FastifyInstance) {
 
   app.get('/me/analytics/export', {
     schema: {
-      querystring: z.object({
-        range: z.enum(['7d', '30d', '90d']).default('30d'),
-      }),
+      querystring: {
+        type: 'object',
+        properties: {
+          range: { type: 'string', enum: ['7d', '30d', '90d'], default: '30d' }
+        }
+      },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const orgId = (request.user as any).orgId;

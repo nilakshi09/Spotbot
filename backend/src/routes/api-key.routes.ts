@@ -22,10 +22,14 @@ export default async function apiKeyRoutes(
   app.post('/', {
     preHandler: [verifyAccessToken, requireAdmin],
     schema: {
-      body: z.object({
-        name: z.string().min(1).max(100),
-        expiresInDays: z.number().int().min(1).max(365).optional(),
-      }),
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          expiresInDays: { type: 'integer', minimum: 1, maximum: 365 },
+        },
+      },
     },
   }, async (req, reply) => {
     const { name, expiresInDays } = req.body as {
@@ -48,7 +52,11 @@ export default async function apiKeyRoutes(
   app.delete('/:id', {
     preHandler: [verifyAccessToken, requireAdmin],
     schema: {
-      params: z.object({ id: z.string().uuid() }),
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string', format: 'uuid' } },
+      },
     },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -64,7 +72,11 @@ export default async function apiKeyRoutes(
   app.post('/:id/rotate', {
     preHandler: [verifyAccessToken, requireAdmin],
     schema: {
-      params: z.object({ id: z.string().uuid() }),
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string', format: 'uuid' } },
+      },
     },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
