@@ -30,6 +30,8 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
   STRIPE_STARTER_PRICE_ID: z.string().startsWith('price_'),
   STRIPE_PRO_PRICE_ID: z.string().startsWith('price_'),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);

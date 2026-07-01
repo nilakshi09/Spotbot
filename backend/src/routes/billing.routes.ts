@@ -71,30 +71,47 @@ export default async function billingRoutes(app: FastifyInstance) {
   app.get('/invoices', {
     preHandler: [verifyAccessToken],
   }, async (req, reply) => {
+    // If Stripe is not configured, return empty gracefully
+    if (!env.STRIPE_SECRET_KEY) {
+      return reply.send({
+        invoices: [],
+        stripeConfigured: false,
+      })
+    }
+
     const org = await db.query.organizations.findFirst({
       where: eq(organizations.id, req.user.orgId),
     });
 
     if (!org?.stripeCustomerId) {
-      return reply.send({ invoices: [] });
+      return reply.send({
+        invoices: [],
+        stripeConfigured: true,
+      });
     }
 
-    const invoices = await stripe.invoices.list({
-      customer: org.stripeCustomerId,
-      limit: 24,  // 2 years of monthly invoices
-    });
+    try {
+      const invoices = await stripe.invoices.list({
+        customer: org.stripeCustomerId,
+        limit: 24,  // 2 years of monthly invoices
+      });
 
-    return reply.send({
-      invoices: invoices.data.map(inv => ({
-        id: inv.id,
-        number: inv.number,
-        status: inv.status,
-        amount: inv.amount_paid / 100,  // convert cents to dollars
-        currency: inv.currency,
-        date: new Date(inv.created * 1000).toISOString(),
-        pdfUrl: inv.invoice_pdf,
-        hostedUrl: inv.hosted_invoice_url,
-      })),
-    });
+      return reply.send({
+        invoices: invoices.data.map(inv => ({
+          id: inv.id,
+          number: inv.number,
+          status: inv.status,
+          amount: inv.amount_paid / 100,  // convert cents to dollars
+          currency: inv.currency,
+          date: new Date(inv.created * 1000).toISOString(),
+          pdfUrl: inv.invoice_pdf,
+          hostedUrl: inv.hosted_invoice_url,
+        })),
+        stripeConfigured: true,
+      });
+    } catch (err) {
+      req.log.error({ err }, 'Failed to fetch invoices from Stripe');
+      return reply.send({ invoices: [], stripeConfigured: true });
+    }
   });
 }

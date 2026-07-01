@@ -14,13 +14,17 @@ import {
   LogOut,
   Menu,
   X,
-  Users
+  Users,
+  FileSpreadsheet,
+  Key,
+  BarChart3
 } from "lucide-react";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 
 const navLinks = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "New Scan", href: "/scan", icon: Search },
+  { name: "Bulk Scan", href: "/scan/bulk", icon: FileSpreadsheet },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Billing", href: "/billing", icon: CreditCard },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -120,6 +124,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
           
+          {['pro', 'enterprise'].includes(stats?.planName ?? '') && (
+            <Link
+              href="/analytics"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/analytics'
+                  ? 'bg-cyan-500/10 text-cyan-400'
+                  : 'text-[#8899aa] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className={`w-5 h-5 ${pathname === '/analytics' ? 'text-cyan-400' : 'text-muted'}`} />
+                Analytics
+              </div>
+            </Link>
+          )}
+          
           {user?.role === 'admin' && (
             <Link
               href="/settings/team"
@@ -133,6 +154,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="flex items-center gap-3">
                 <Users className={`w-5 h-5 ${pathname === '/settings/team' ? 'text-cyan-400' : 'text-muted'}`} />
                 Team
+              </div>
+            </Link>
+          )}
+
+          {stats?.planName === 'enterprise' && (
+            <Link
+              href="/settings/white-label"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/settings/white-label'
+                  ? 'bg-cyan-500/10 text-cyan-400'
+                  : 'text-[#8899aa] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Settings className={`w-5 h-5 ${pathname === '/settings/white-label' ? 'text-cyan-400' : 'text-muted'}`} />
+                White Label
+              </div>
+            </Link>
+          )}
+
+          {['pro', 'enterprise'].includes(stats?.planName ?? '') && (
+            <Link
+              href="/settings/api"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === '/settings/api'
+                  ? 'bg-cyan-500/10 text-cyan-400'
+                  : 'text-[#8899aa] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Key className={`w-5 h-5 ${pathname === '/settings/api' ? 'text-cyan-400' : 'text-muted'}`} />
+                API Keys
               </div>
             </Link>
           )}

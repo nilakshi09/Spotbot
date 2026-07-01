@@ -16,7 +16,11 @@ import billingRoutes from './routes/billing.routes.js';
 import scanRoutes from './routes/scan.routes.js';
 import publicRoutes from './routes/public.routes.js';
 import orgRoutes from './routes/org.routes.js';
-
+import multipart from '@fastify/multipart';
+import bulkScanRoutes from './routes/bulk-scan.routes.js';
+import whiteLabelRoutes from './routes/white-label.routes.js';
+import apiKeyRoutes from './routes/api-key.routes.js';
+import salesLeadRoutes from './routes/sales-lead.routes.js';
 export async function buildApp() {
   const app = Fastify({
     ignoreTrailingSlash: true,
@@ -34,9 +38,29 @@ export async function buildApp() {
     runFirst: true,
   });
 
+  // Register multipart BEFORE routes:
+  await app.register(multipart, {
+    limits: {
+      fileSize: 1024 * 1024,  // 1MB max CSV size
+      files: 1,               // Only 1 file per request
+    },
+  });
+
   // CORS
   await app.register(cors, {
-    origin: env.FRONTEND_URL,
+    origin: (origin, cb) => {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        'http://localhost:3000',
+        'http://localhost:3001',
+      ].filter(Boolean)
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true)
+      } else {
+        cb(new Error('Not allowed by CORS'), false)
+      }
+    },
     credentials: true,
   });
 
@@ -86,10 +110,14 @@ export async function buildApp() {
   await app.register(healthRoutes, { prefix: '/api' });
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(scanRoutes, { prefix: '/api/scans' });
+  await app.register(bulkScanRoutes, { prefix: '/api/scans' });
   await app.register(userRoutes, { prefix: '/api/users' });
   await app.register(reportRoutes, { prefix: '/api' });
   await app.register(billingRoutes, { prefix: '/api/billing' });
   await app.register(orgRoutes, { prefix: '/api/org' });
+  await app.register(whiteLabelRoutes, { prefix: '/api/org' });
+  await app.register(apiKeyRoutes, { prefix: '/api/keys' });
+  await app.register(salesLeadRoutes, { prefix: '/api/sales' });
 
   return app;
 }

@@ -90,7 +90,8 @@ export function globalErrorHandler(
   return reply.status(500).send({
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: 'An unexpected error occurred',
+      message: error.message || 'An unexpected error occurred',
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
     },
   });
 }

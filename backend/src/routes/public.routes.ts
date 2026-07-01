@@ -2,6 +2,10 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { reportShareService } from '../services/report-share.service.js';
 import { NotFoundError, AppError } from '../middleware/error-handler.js';
+import { db } from '../db/client.js';
+import { users } from '../db/schema/users.js';
+import { eq } from 'drizzle-orm';
+import { whiteLabelService, DEFAULT_BRANDING } from '../services/white-label.service.js';
 
 // Public routes — NO authentication required
 export default async function publicRoutes(app: FastifyInstance) {
@@ -13,6 +17,15 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     try {
       const { scan, report } = await reportShareService.getPublicReport(token);
+
+      const scanUser = await db.query.users.findFirst({
+        where: eq(users.id, scan.userId),
+        columns: { organizationId: true },
+      })
+
+      const branding = scanUser?.organizationId
+        ? await whiteLabelService.getBranding(scanUser.organizationId)
+        : DEFAULT_BRANDING
 
       // Return same structure as authenticated GET /api/scans/:id
       // but with additional share metadata
@@ -38,6 +51,7 @@ export default async function publicRoutes(app: FastifyInstance) {
           expiresAt: report.shareExpiresAt,
           viewCount: report.viewCount,
         },
+        branding,
       });
     } catch (error) {
       // For public endpoints, return 404 for any error

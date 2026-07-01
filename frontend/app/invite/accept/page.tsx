@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useInvitationDetails, useAcceptInvitation } from '@/hooks/use-team'
 import type { AcceptInvitationResponse } from '@/types/team'
@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { Shield, User, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
-export default function AcceptInvitePage() {
+function AcceptInviteHandler() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { login } = useAuth()
@@ -265,6 +265,22 @@ export default function AcceptInvitePage() {
         </p>
       </div>
     </InviteLayout>
+  )
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={
+      <InviteLayout>
+        <div className="space-y-4 animate-pulse">
+          <div className="h-8 bg-white/5 rounded-lg" />
+          <div className="h-4 bg-white/5 rounded-lg w-3/4" />
+          <div className="h-12 bg-white/5 rounded-xl" />
+        </div>
+      </InviteLayout>
+    }>
+      <AcceptInviteHandler />
+    </Suspense>
   )
 }
 

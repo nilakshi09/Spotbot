@@ -10,9 +10,13 @@ import RealReach from '@/components/report/real-reach'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { timeAgo } from '@/lib/format'
 import type { ScanResult, Platform } from '@/types/scan'
+import { type BrandingConfig, DEFAULT_BRANDING } from '@/types/white-label'
 
 interface PublicReportViewProps {
-  scan: ScanResult & { shareInfo?: { expiresAt: string; viewCount: number } }
+  scan: ScanResult & { 
+    shareInfo?: { expiresAt: string; viewCount: number };
+    branding?: BrandingConfig;
+  }
   token: string
 }
 
@@ -59,6 +63,7 @@ function getRiskDescription(level?: string): string {
 export function PublicReportView({ scan, token }: PublicReportViewProps) {
   const platform: Platform = scan.platform || 'instagram';
   const platformLabel = platform === 'youtube' ? 'YouTube' : 'Instagram';
+  const branding = scan.branding ?? DEFAULT_BRANDING;
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -69,14 +74,26 @@ export function PublicReportView({ scan, token }: PublicReportViewProps) {
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center
           justify-between">
 
-          {/* Left: Spotbot branding */}
+          {/* Left: Company branding */}
           <div className="flex items-center gap-3">
-            <span className="text-lg font-bold text-indigo-400
-              font-[family-name:var(--font-space-grotesk)]">
-              SPOTBOT
-            </span>
+            {branding.logoUrl && !branding.hideSpotbotLogo ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.companyName}
+                className="h-8 object-contain"
+              />
+            ) : (
+              !branding.hideSpotbotLogo && (
+                <span
+                  className="text-lg font-bold"
+                  style={{ color: branding.primaryColor }}
+                >
+                  {branding.companyName}
+                </span>
+              )
+            )}
             <span className="text-gray-600 text-sm hidden sm:block">
-              Fraud Analysis Report
+              {branding.reportHeaderText}
             </span>
           </div>
 
@@ -285,12 +302,15 @@ export function PublicReportView({ scan, token }: PublicReportViewProps) {
 
           {/* Legal */}
           <div className="text-xs text-gray-600 space-y-1">
-            <p>© 2026 Spotbot · spotbot.io</p>
-            <p>
-              This report reflects publicly available data
-              analyzed at the time of scan.
-              Spotbot does not access private account information.
-            </p>
+            <p>{branding.reportFooterText}</p>
+            {!branding.hidePoweredBySpotbot && (
+              <p>
+                Powered by{' '}
+                <a href="https://spotbot.io" className="text-gray-500 hover:text-gray-400">
+                  Spotbot
+                </a>
+              </p>
+            )}
           </div>
         </div>
       </footer>

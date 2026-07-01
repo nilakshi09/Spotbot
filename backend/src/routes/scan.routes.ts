@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { ScanService } from '../services/scan.service.js';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
+import { verifyJwtOrApiKey } from '../middleware/api-key.middleware.js';
 import { checkScanQuota } from '../middleware/quota.middleware.js';
 import { ScanLimitError } from '../middleware/quota.middleware.js';
 import { db } from '../db/client.js';
@@ -33,10 +34,7 @@ const ListScansSchema = z.object({
 });
 
 export default async function scanRoutes(app: FastifyInstance) {
-  // All scan routes require authentication
-  app.addHook('onRequest', verifyAccessToken);
-
-  app.post('/', { preHandler: [checkScanQuota] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/', { preHandler: [verifyJwtOrApiKey, checkScanQuota] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { platform, handle } = CreateScanSchema.parse(request.body);
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
@@ -66,7 +64,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.get('/:id', { preHandler: [verifyJwtOrApiKey] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const role = (request.user as any).role;
@@ -145,7 +143,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', { preHandler: [verifyJwtOrApiKey] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const role = (request.user as any).role;
@@ -155,7 +153,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.delete('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.delete('/:id', { preHandler: [verifyAccessToken] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
     const scanId = request.params.id;
 
@@ -163,7 +161,7 @@ export default async function scanRoutes(app: FastifyInstance) {
     return reply.status(204).send();
   });
 
-  app.post('/:id/rescan', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  app.post('/:id/rescan', { preHandler: [verifyAccessToken] }, async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const scanId = request.params.id;

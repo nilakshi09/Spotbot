@@ -13,9 +13,10 @@ interface UpgradeWallProps {
   plan: string;
   onDismiss?: () => void;
   isOpen?: boolean;
+  customMessage?: string;
 }
 
-export function UpgradeWall({ used, limit, plan, onDismiss, isOpen = true }: UpgradeWallProps) {
+export function UpgradeWall({ used, limit, plan, onDismiss, isOpen = true, customMessage }: UpgradeWallProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -62,7 +63,7 @@ export function UpgradeWall({ used, limit, plan, onDismiss, isOpen = true }: Upg
                         Scan Limit Reached
                       </Dialog.Title>
                       <Dialog.Description className="text-zinc-400">
-                        You've used all {limit} scans on the {plan.charAt(0).toUpperCase() + plan.slice(1)} plan this month.
+                        {customMessage || `You've used all ${limit} scans on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan this month.`}
                       </Dialog.Description>
                     </div>
 

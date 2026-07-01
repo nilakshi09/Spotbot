@@ -3,7 +3,7 @@ import { Receipt, Download, ExternalLink } from 'lucide-react'
 import { useBillingPortal } from '@/hooks/use-billing-portal'
 import { StripeRedirectOverlay } from './stripe-redirect-overlay'
 
-export function InvoiceHistory({ invoices, isLoading }: { invoices: Invoice[], isLoading: boolean }) {
+export function InvoiceHistory({ invoices, isLoading, stripeConfigured }: { invoices: Invoice[], isLoading: boolean, stripeConfigured: boolean }) {
   const { mutate: openPortal, isPending: portalLoading } = useBillingPortal()
 
   if (isLoading) {
@@ -37,7 +37,17 @@ export function InvoiceHistory({ invoices, isLoading }: { invoices: Invoice[], i
           )}
         </div>
 
-        {invoices.length === 0 ? (
+        {!stripeConfigured ? (
+          <div className="py-12 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
+              <Receipt className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="text-white font-medium mb-1">Billing history will appear here</h3>
+            <p className="text-gray-400 text-sm max-w-sm">
+              Once you upgrade to a paid plan
+            </p>
+          </div>
+        ) : invoices.length === 0 ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
               <Receipt className="w-6 h-6 text-gray-400" />

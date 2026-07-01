@@ -122,6 +122,7 @@ import {
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { env } from '../config/env.js';
+import { whiteLabelService, type BrandingConfig } from './white-label.service.js';
 
 const s3 = new S3Client({
   region: env.S3_REGION,
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function PdfDocument({ scan }: { scan: any }) {
+function PdfDocument({ scan, branding }: { scan: any, branding: BrandingConfig }) {
   const dateStr = new Date(scan.createdAt).toLocaleDateString(
     'en-US',
     {
@@ -210,16 +211,24 @@ function PdfDocument({ scan }: { scan: any }) {
         View,
         { style: styles.section },
 
-        React.createElement(
+        !branding.hideSpotbotLogo && branding.logoUrl ? React.createElement(
           Text,
-          { style: styles.title },
-          'SPOTBOT'
+          { style: [styles.title, { color: branding.primaryColor }] },
+          branding.companyName
+        ) : !branding.hideSpotbotLogo ? React.createElement(
+          Text,
+          { style: [styles.title, { color: branding.primaryColor }] },
+          branding.companyName
+        ) : React.createElement(
+          Text,
+          { style: [styles.title, { color: branding.primaryColor }] },
+          branding.companyName
         ),
 
         React.createElement(
           Text,
-          { style: styles.subtitle },
-          'Fraud Analysis Report'
+          { style: [styles.subtitle, { color: branding.primaryColor }] },
+          branding.reportHeaderText
         ),
 
         React.createElement(
@@ -297,10 +306,11 @@ function PdfDocument({ scan }: { scan: any }) {
 
 export class PdfService {
 
-  async generatePdf(scan: any): Promise<string> {
+  async generatePdf(scan: any, branding?: BrandingConfig): Promise<string> {
+    const brandingConfig = branding ?? await whiteLabelService.getBranding(scan.userId);
 
     const stream = await renderToStream(
-      PdfDocument({ scan }) as any
+      PdfDocument({ scan, branding: brandingConfig }) as any
     );
 
     const key = `reports/${scan.id}.pdf`;

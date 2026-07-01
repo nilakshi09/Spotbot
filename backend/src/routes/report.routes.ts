@@ -11,6 +11,8 @@ import { reportShareService } from '../services/report-share.service.js';
 import { env } from '../config/env.js';
 import { redis } from '../config/redis.js';
 import { AppError } from '../middleware/error-handler.js';
+import { whiteLabelService } from '../services/white-label.service.js';
+import { users } from '../db/schema/users.js';
 
 const pdfService = new PdfService();
 const scanService = new ScanService();
@@ -89,8 +91,18 @@ export default async function reportRoutes(app: FastifyInstance) {
       if (reportData[0]?.pdfUrl && reportData[0]?.pdfGeneratedAt) {
         return reply.redirect(reportData[0].pdfUrl);
       }
+      
+      const userResult = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { organizationId: true },
+      })
 
-      const pdfUrl = await pdfService.generatePdf(scan);
+      let branding;
+      if (userResult?.organizationId) {
+        branding = await whiteLabelService.getBranding(userResult.organizationId);
+      }
+
+      const pdfUrl = await pdfService.generatePdf(scan, branding);
 
       // Upsert report record
       if (reportData[0]) {

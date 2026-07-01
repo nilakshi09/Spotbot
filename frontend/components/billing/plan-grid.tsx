@@ -3,8 +3,11 @@ import { Check } from 'lucide-react'
 import { useCheckout } from '@/hooks/use-checkout'
 import { motion } from 'framer-motion'
 import { StripeRedirectOverlay } from './stripe-redirect-overlay'
+import { ContactSalesModal } from './contact-sales-modal'
+import { useState } from 'react'
 
 export function PlanGrid({ currentPlan, isLoading }: { currentPlan: string, isLoading: boolean }) {
+  const [showContactModal, setShowContactModal] = useState(false)
   const { mutate: checkout, isPending } = useCheckout()
   const upgradeablePlans = PLANS.filter(p => p.id !== 'free')
 
@@ -23,12 +26,12 @@ export function PlanGrid({ currentPlan, isLoading }: { currentPlan: string, isLo
       <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
         <h2 className="text-lg font-medium text-white mb-2">You're on our highest self-serve plan.</h2>
         <p className="text-gray-400 mb-4">Need more? Contact us about Enterprise.</p>
-        <a 
-          href="mailto:sales@spotbot.io"
+        <button 
+          onClick={() => setShowContactModal(true)}
           className="inline-flex px-4 py-2 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
         >
           Contact Sales →
-        </a>
+        </button>
       </div>
     )
   }
@@ -85,12 +88,12 @@ export function PlanGrid({ currentPlan, isLoading }: { currentPlan: string, isLo
                   Current Plan
                 </div>
               ) : plan.id === 'enterprise' ? (
-                <a
-                  href="mailto:sales@spotbot.io"
+                <button
+                  onClick={() => setShowContactModal(true)}
                   className="w-full block text-center py-2.5 rounded-lg border border-white/20 text-white font-medium hover:bg-white/5 transition-colors"
                 >
                   Contact Sales →
-                </a>
+                </button>
               ) : (
                 <button
                   onClick={() => plan.priceId && checkout(plan.priceId)}
@@ -108,6 +111,10 @@ export function PlanGrid({ currentPlan, isLoading }: { currentPlan: string, isLo
           )
         })}
       </div>
+      <ContactSalesModal
+        open={showContactModal}
+        onOpenChange={setShowContactModal}
+      />
     </div>
     </>
   )

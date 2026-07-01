@@ -70,6 +70,7 @@ export default function BillingPage() {
       {/* Invoice History */}
       <InvoiceHistory
         invoices={invoicesData?.invoices ?? []}
+        stripeConfigured={invoicesData?.stripeConfigured ?? false}
         isLoading={invoicesLoading}
       />
     </div>

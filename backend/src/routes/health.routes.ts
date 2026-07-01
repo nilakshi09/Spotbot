@@ -5,6 +5,7 @@ import { redis } from '../config/redis.js';
 import { scanQueue } from '../jobs/queue.js';
 import { env } from '../config/env.js';
 import { getMetrics } from '../utils/metrics.js';
+import { openApiSpec } from '../docs/openapi.js';
 
 export default async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (req, reply) => {
@@ -102,12 +103,45 @@ export default async function healthRoutes(app: FastifyInstance) {
     }
   })
 
-  // GET /api/metrics — internal metrics snapshot
   app.get('/api/metrics', async (req, reply) => {
     const token = req.headers['x-internal-token']
     if (token !== env.INTERNAL_METRICS_TOKEN && env.NODE_ENV === 'production') {
       return reply.status(403).send({ error: 'Forbidden' })
     }
     return reply.send(getMetrics())
+  })
+
+  // GET /api/docs — OpenAPI spec
+  app.get('/docs', async (req, reply) => {
+    return reply.send(openApiSpec)
+  })
+
+  // GET /api/docs/ui — Swagger UI HTML
+  app.get('/docs/ui', async (req, reply) => {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Spotbot API Docs</title>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.css">
+      </head>
+      <body>
+        <div id="swagger-ui"></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js"></script>
+        <script>
+          SwaggerUIBundle({
+            url: '/api/docs',
+            dom_id: '#swagger-ui',
+            presets: [SwaggerUIBundle.presets.apis],
+            layout: 'BaseLayout',
+            deepLinking: true,
+          })
+        </script>
+      </body>
+      </html>
+    `
+    return reply.header('Content-Type', 'text/html').send(html)
   })
 }

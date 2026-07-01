@@ -3,8 +3,13 @@
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScanForm } from "@/components/scan/scan-form";
+import Link from "next/link";
+import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 
 export default function NewScanPage() {
+  const { data: stats } = useDashboardStats();
+  const isPaidPlan = stats?.planName && stats.planName !== 'free';
+
   return (
     <div className="max-w-4xl mx-auto pt-10">
       <div className="flex items-center gap-4 mb-8">
@@ -25,6 +30,20 @@ export default function NewScanPage() {
         className="bg-[#0d1117] border border-white/10 rounded-2xl p-8 sm:p-16 text-center"
       >
         <ScanForm />
+        
+        {isPaidPlan && (
+          <div className="text-center mt-6">
+            <p className="text-gray-500 text-sm">
+              Need to scan multiple accounts?{' '}
+              <Link
+                href="/scan/bulk"
+                className="text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                Use Bulk Scan →
+              </Link>
+            </p>
+          </div>
+        )}
       </motion.div>
     </div>
   );

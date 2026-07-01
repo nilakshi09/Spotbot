@@ -116,3 +116,59 @@ export async function sendInvitationEmail(
     `,
   });
 }
+
+export async function sendSalesLeadNotification(lead: {
+  id: string
+  companyName: string
+  contactName: string
+  contactEmail: string
+  teamSize: string | null
+  estimatedScansPerMonth: string | null
+  message: string | null
+}) {
+  // Send to your own inbox (the email you signed up with on Resend)
+  await resend.emails.send({
+    from: 'Spotbot <onboarding@resend.dev>',
+    to: 'nilakshirahangdale09@gmail.com', // CHANGE TO YOUR ACTUAL EMAIL
+    subject: `New Enterprise Lead: ${lead.companyName}`,
+    html: `
+      <h2>New Enterprise Sales Lead</h2>
+      <table style="border-collapse: collapse; width: 100%;">
+        <tr><td style="padding:8px; font-weight:bold;">Company</td>
+          <td style="padding:8px;">${lead.companyName}</td></tr>
+        <tr><td style="padding:8px; font-weight:bold;">Contact</td>
+          <td style="padding:8px;">${lead.contactName}</td></tr>
+        <tr><td style="padding:8px; font-weight:bold;">Email</td>
+          <td style="padding:8px;">${lead.contactEmail}</td></tr>
+        <tr><td style="padding:8px; font-weight:bold;">Team Size</td>
+          <td style="padding:8px;">${lead.teamSize ?? 'Not specified'}</td></tr>
+        <tr><td style="padding:8px; font-weight:bold;">Est. Scans/Month</td>
+          <td style="padding:8px;">${lead.estimatedScansPerMonth ?? 'Not specified'}</td></tr>
+        <tr><td style="padding:8px; font-weight:bold;">Message</td>
+          <td style="padding:8px;">${lead.message ?? '—'}</td></tr>
+      </table>
+      <p>Lead ID: ${lead.id}</p>
+    `,
+  })
+}
+
+export async function sendSalesLeadConfirmation(
+  email: string,
+  contactName: string,
+) {
+  await resend.emails.send({
+    from: 'Spotbot <onboarding@resend.dev>',
+    to: email,
+    subject: 'We received your Spotbot Enterprise inquiry',
+    html: `
+      <h2>Hi ${contactName},</h2>
+      <p>Thanks for your interest in Spotbot Enterprise!</p>
+      <p>Our team has received your request and will reach out
+        within 1 business day to discuss your needs and set up
+        a custom plan.</p>
+      <p>In the meantime, feel free to explore Spotbot's existing
+        features on your current plan.</p>
+      <p>— The Spotbot Team</p>
+    `,
+  })
+}

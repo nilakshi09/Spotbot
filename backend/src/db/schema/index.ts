@@ -7,3 +7,7 @@ export * from './reports.js';
 export * from './billing-events.js';
 export * from './relations.js';
 export * from './invitations.js';
+export * from './bulk-scans.js';
+export * from './white-label.js';
+export * from './api-keys.js';
+export * from './sales-leads.js';

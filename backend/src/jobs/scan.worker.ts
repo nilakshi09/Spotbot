@@ -12,6 +12,7 @@ import { quotaService } from '../services/quota.service.js';
 import { captureMessage } from '../config/sentry.js';
 import { track } from '../utils/metrics.js';
 import { businessLogger, logger } from '../utils/logger.js';
+import { bulkScanService } from '../services/bulk-scan.service.js';
 
 const instagramClient = new InstagramClient();
 const socialBladeClient = new SocialBladeClient();
@@ -57,6 +58,19 @@ export const scanWorker = new Worker<ScanJobData>(
       businessLogger.scanCompleted(scanId, result.fraudScore, durationMs);
       track.scanCompleted(durationMs);
 
+      if (job.data.bulkScanId !== undefined) {
+        await bulkScanService.updateProgress(
+          job.data.bulkScanId,
+          job.data.bulkIndex!,
+          {
+            scanId: scanId,
+            status: 'completed',
+            fraudScore: result.fraudScore,
+            riskLevel: result.riskLevel,
+          },
+        ).catch(e => logger.error({ e }, 'Failed to update bulk progress'));
+      }
+
       if (durationMs > 30_000) {
         logger.warn({ scanId, durationMs }, 'Scan took longer than 30 seconds');
         captureMessage(
@@ -86,6 +100,19 @@ scanWorker.on('failed', async (job, err) => {
     
     businessLogger.scanFailed(job.data.scanId, err.message, job.attemptsMade);
     track.scanFailed();
+
+    // Update bulk scan progress on failure
+    if (job.data.bulkScanId !== undefined) {
+      await bulkScanService.updateProgress(
+        job.data.bulkScanId,
+        job.data.bulkIndex!,
+        {
+          scanId: job.data.scanId,
+          status: 'failed',
+          error: err.message,
+        },
+      ).catch(e => logger.error({ e }, 'Failed to update bulk progress'));
+    }
 
     // Decrement quota
     await quotaService.decrementUsage(job.data.orgId);

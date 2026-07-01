@@ -17,4 +17,6 @@ export interface ScanJobData {
   handle: string;
   userId: string;
   orgId: string;
+  bulkScanId?: string;
+  bulkIndex?: number;
 }

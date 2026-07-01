@@ -34,61 +34,77 @@ export function CurrentPlanCard({ subscription, isLoading }: { subscription?: Su
         
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
-            <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mb-4 ${getPlanBadgeStyle(subscription.plan)}`}>
-              {subscription.planName}
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-3xl font-bold text-white">
-                {plan?.price === 0 ? 'Free' : plan?.price === null ? 'Custom' : `$${plan?.price}`}
-              </span>
-              {plan?.price ? <span className="text-gray-400">/ month</span> : null}
-            </div>
+            {subscription.plan === 'enterprise' ? (
+              <div className="flex items-center gap-3 mb-2">
+                <span className="px-3 py-1 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-full text-xs font-medium">
+                  Enterprise
+                </span>
+                <span className="text-gray-400 text-sm">
+                  Custom pricing
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mb-4 ${getPlanBadgeStyle(subscription.plan)}`}>
+                  {subscription.planName}
+                </div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl font-bold text-white">
+                    {plan?.price === 0 ? 'Free' : plan?.price === null ? 'Custom' : `$${plan?.price}`}
+                  </span>
+                  {plan?.price ? <span className="text-gray-400">/ month</span> : null}
+                </div>
 
-            {/* Renewal info */}
-            <div className="text-sm mt-2">
-              {!isPaid && subscription.plan !== 'enterprise' && <span className="text-gray-400">No subscription — upgrade to unlock more scans</span>}
-              {isPaid && !subscription.cancelAtPeriodEnd && subscription.nextBillingDate && (
-                <span className="text-gray-400">Renews on {new Date(subscription.nextBillingDate).toLocaleDateString()}</span>
-              )}
-            </div>
+                {/* Renewal info */}
+                <div className="text-sm mt-2">
+                  {!isPaid && subscription.plan !== 'enterprise' && <span className="text-gray-400">No subscription — upgrade to unlock more scans</span>}
+                  {isPaid && !subscription.cancelAtPeriodEnd && subscription.nextBillingDate && (
+                    <span className="text-gray-400">Renews on {new Date(subscription.nextBillingDate).toLocaleDateString()}</span>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            {isPaid && (
+            {subscription?.plan === 'enterprise' ? (
+              <div className="text-sm text-gray-400 mt-2">
+                Need to make changes? Contact{' '}
+                <a href="mailto:sales@spotbot.io" className="text-indigo-400 hover:text-indigo-300">
+                  sales@spotbot.io
+                </a>
+              </div>
+            ) : (
               <>
-                <button
-                  onClick={handleCancel}
-                  disabled={portalLoading}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showCancelConfirm ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'}`}
-                >
-                  {showCancelConfirm ? 'Click to confirm cancellation' : 'Cancel Plan'}
-                </button>
-                <button
-                  onClick={() => openPortal()}
-                  disabled={portalLoading}
-                  className="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 font-medium hover:bg-cyan-500/20 transition-colors flex items-center gap-2 text-sm"
-                >
-                  {portalLoading ? 'Redirecting...' : 'Manage Billing'}
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                {isPaid && (
+                  <>
+                    <button
+                      onClick={handleCancel}
+                      disabled={portalLoading}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showCancelConfirm ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'text-gray-400 hover:text-white bg-white/5 hover:bg-white/10'}`}
+                    >
+                      {showCancelConfirm ? 'Click to confirm cancellation' : 'Cancel Plan'}
+                    </button>
+                    <button
+                      onClick={() => openPortal()}
+                      disabled={portalLoading}
+                      className="px-4 py-2 rounded-lg bg-cyan-500/10 text-cyan-400 font-medium hover:bg-cyan-500/20 transition-colors flex items-center gap-2 text-sm"
+                    >
+                      {portalLoading ? 'Redirecting...' : 'Manage Billing'}
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+                {subscription.plan === 'free' && (
+                  <button 
+                    onClick={() => document.getElementById('plan-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:from-cyan-400 hover:to-blue-400 transition-colors text-sm"
+                  >
+                    Upgrade Now →
+                  </button>
+                )}
               </>
-            )}
-            {subscription.plan === 'free' && (
-              <button 
-                onClick={() => document.getElementById('plan-grid')?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:from-cyan-400 hover:to-blue-400 transition-colors text-sm"
-              >
-                Upgrade Now →
-              </button>
-            )}
-            {subscription.plan === 'enterprise' && (
-              <a 
-                href="mailto:support@spotbot.io"
-                className="px-4 py-2 rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 transition-colors text-sm"
-              >
-                Contact Support
-              </a>
             )}
           </div>
         </div>

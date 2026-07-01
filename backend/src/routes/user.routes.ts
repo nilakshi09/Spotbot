@@ -5,9 +5,9 @@ import { scans } from '../db/schema/scans.js';
 import { organizations } from '../db/schema/organizations.js';
 import { users } from '../db/schema/users.js';
 import { refreshTokens } from '../db/schema/refresh_tokens.js';
-import { eq, and, sql, asc, gte, inArray } from 'drizzle-orm';
+import { eq, and, sql, asc, desc, gte, inArray } from 'drizzle-orm';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
-import { UnauthorizedError } from '../middleware/error-handler.js';
+import { UnauthorizedError, AppError } from '../middleware/error-handler.js';
 import bcrypt from 'bcrypt';
 import { quotaService } from '../services/quota.service.js';
 import { billingService } from '../services/billing.service.js';
@@ -141,17 +141,24 @@ export default async function userRoutes(app: FastifyInstance) {
     return reply.send({ message: 'Account deleted' });
   });
 
-  app.get('/me/analytics', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/me/analytics', {
+    schema: {
+      querystring: z.object({
+        range: z.enum(['7d', '30d', '90d']).default('30d'),
+      }),
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { range } = request.query as { range: '7d' | '30d' | '90d' };
     const userId = (request.user as any).sub;
     const orgId = (request.user as any).orgId;
     const isAdmin = (request.user as any).role === 'admin';
 
-    // Get scans for the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const daysMap = { '7d': 7, '30d': 30, '90d': 90 };
+    const days = daysMap[range];
 
-    // Build where clause based on role
-    // Admin sees all org scans, member sees own
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
     const userIds = isAdmin
       ? (await db.query.users.findMany({
           where: eq(users.organizationId, orgId),
@@ -159,82 +166,208 @@ export default async function userRoutes(app: FastifyInstance) {
         })).map((u: any) => u.id)
       : [userId];
 
-    const recentScans = await db.query.scans.findMany({
+    const rangeScans = await db.query.scans.findMany({
       where: and(
         inArray(scans.userId, userIds),
         eq(scans.status, 'completed'),
-        gte(scans.createdAt, thirtyDaysAgo)
+        gte(scans.createdAt, startDate)
       ),
       columns: {
         id: true,
+        handle: true,
+        platform: true,
         fraudScore: true,
         riskLevel: true,
-        platform: true,
+        realReach: true,
+        profileData: true,
         createdAt: true,
       },
       orderBy: [asc(scans.createdAt)],
     });
 
-    // 1. Risk distribution
     const riskDistribution = {
-      low: recentScans.filter((s: any) => s.riskLevel === 'low').length,
-      medium: recentScans.filter((s: any) => s.riskLevel === 'medium').length,
-      high: recentScans.filter((s: any) => s.riskLevel === 'high').length,
+      low: rangeScans.filter((s: any) => s.riskLevel === 'low').length,
+      medium: rangeScans.filter((s: any) => s.riskLevel === 'medium').length,
+      high: rangeScans.filter((s: any) => s.riskLevel === 'high').length,
     };
 
-    // 2. Scan volume by day (last 14 days)
-    const scanVolumeByDay = getLast14Days().map(date => ({
+    const platformDistribution = {
+      instagram: rangeScans.filter((s: any) => s.platform === 'instagram').length,
+      youtube: rangeScans.filter((s: any) => s.platform === 'youtube').length,
+    };
+
+    const topFlaggedAccounts = [...rangeScans]
+      .sort((a, b) => (b.fraudScore ?? 0) - (a.fraudScore ?? 0))
+      .slice(0, 10)
+      .map(s => ({
+        handle: s.handle,
+        platform: s.platform,
+        fraudScore: s.fraudScore,
+        riskLevel: s.riskLevel,
+        followers: (s.profileData as any)?.followers ?? 0,
+        scanDate: s.createdAt.toISOString(),
+      }));
+
+    const trendDays = getDaysInRange(days);
+    const scanVolumeTrend = trendDays.map(date => ({
       date,
-      count: recentScans.filter((s: any) =>
+      count: rangeScans.filter((s: any) =>
         s.createdAt.toISOString().startsWith(date)
       ).length,
     }));
 
-    // 3. Average fraud score by day
-    const avgScoreByDay = getLast14Days().map(date => {
-      const dayScans = recentScans.filter((s: any) =>
+    const avgScoreTrend = trendDays.map(date => {
+      const dayScans = rangeScans.filter((s: any) =>
         s.createdAt.toISOString().startsWith(date)
       );
-      const avg = dayScans.length > 0
-        ? Math.round(
-            dayScans.reduce((sum: number, s: any) => sum + (s.fraudScore ?? 0), 0)
-            / dayScans.length
-          )
-        : null;
-      return { date, avgScore: avg };
+      return {
+        date,
+        avgScore: dayScans.length > 0
+          ? Math.round(
+              dayScans.reduce((sum, s) => sum + (s.fraudScore ?? 0), 0)
+              / dayScans.length
+            )
+          : null,
+      };
     });
 
-    // 4. Platform distribution
-    const platformDistribution = {
-      instagram: recentScans.filter((s: any) => s.platform === 'instagram').length,
-      youtube: recentScans.filter((s: any) => s.platform === 'youtube').length,
-    };
-
-    // 5. Score distribution buckets
     const scoreDistribution = [
-      { range: '0-20', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) <= 20).length },
-      { range: '21-40', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 20 && (s.fraudScore ?? 0) <= 40).length },
-      { range: '41-60', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 40 && (s.fraudScore ?? 0) <= 60).length },
-      { range: '61-80', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 60 && (s.fraudScore ?? 0) <= 80).length },
-      { range: '81-100', count: recentScans.filter((s: any) => (s.fraudScore ?? 0) > 80).length },
+      { range: '0-20', count: rangeScans.filter(s => (s.fraudScore ?? 0) <= 20).length },
+      { range: '21-40', count: rangeScans.filter(s => (s.fraudScore ?? 0) > 20 && (s.fraudScore ?? 0) <= 40).length },
+      { range: '41-60', count: rangeScans.filter(s => (s.fraudScore ?? 0) > 40 && (s.fraudScore ?? 0) <= 60).length },
+      { range: '61-80', count: rangeScans.filter(s => (s.fraudScore ?? 0) > 60 && (s.fraudScore ?? 0) <= 80).length },
+      { range: '81-100', count: rangeScans.filter(s => (s.fraudScore ?? 0) > 80).length },
     ];
 
+    const totalReach = rangeScans.reduce(
+      (sum, s) => sum + (s.realReach ?? 0), 0
+    );
+    const avgFraudScore = rangeScans.length > 0
+      ? Math.round(
+          rangeScans.reduce((sum, s) => sum + (s.fraudScore ?? 0), 0)
+          / rangeScans.length
+        )
+      : 0;
+    const highRiskPct = rangeScans.length > 0
+      ? Math.round((riskDistribution.high / rangeScans.length) * 100)
+      : 0;
+
     return reply.send({
+      range,
       riskDistribution,
-      scanVolumeByDay,
-      avgScoreByDay,
       platformDistribution,
+      scanVolumeTrend,
+      avgScoreTrend,
       scoreDistribution,
-      totalScansLast30Days: recentScans.length,
+      topFlaggedAccounts,
+      summary: {
+        totalScans: rangeScans.length,
+        avgFraudScore,
+        highRiskCount: riskDistribution.high,
+        highRiskPct,
+        totalEstimatedReach: totalReach,
+      },
+      // Backward compatibility
+      scanVolumeByDay: scanVolumeTrend,
+      avgScoreByDay: avgScoreTrend,
+      totalScansLast30Days: rangeScans.length,
     });
+  });
+
+  app.get('/me/analytics/export', {
+    schema: {
+      querystring: z.object({
+        range: z.enum(['7d', '30d', '90d']).default('30d'),
+      }),
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const orgId = (request.user as any).orgId;
+    const org = await db.query.organizations.findFirst({
+      where: eq(organizations.id, orgId),
+      columns: { plan: true },
+    });
+
+    if (!org || !['pro', 'enterprise'].includes(org.plan)) {
+      throw new AppError(
+        402,
+        'Analytics export requires Pro or Enterprise plan',
+        'PLAN_NOT_SUPPORTED'
+      );
+    }
+
+    const { range } = request.query as { range: '7d' | '30d' | '90d' };
+    const daysMap = { '7d': 7, '30d': 30, '90d': 90 };
+    const days = daysMap[range];
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const userId = (request.user as any).sub;
+    const isAdmin = (request.user as any).role === 'admin';
+
+    const userIds = isAdmin
+      ? (await db.query.users.findMany({
+          where: eq(users.organizationId, orgId),
+          columns: { id: true },
+        })).map((u: any) => u.id)
+      : [userId];
+
+    const rangeScans = await db.query.scans.findMany({
+      where: and(
+        inArray(scans.userId, userIds),
+        eq(scans.status, 'completed'),
+        gte(scans.createdAt, startDate)
+      ),
+      orderBy: [desc(scans.createdAt)],
+    });
+
+    const headers = [
+      'handle',
+      'platform',
+      'fraud_score',
+      'risk_level',
+      'real_reach',
+      'followers',
+      'scan_date',
+    ];
+
+    const rows = rangeScans.map((s: any) => [
+      s.handle,
+      s.platform,
+      s.fraudScore ?? '',
+      s.riskLevel ?? '',
+      s.realReach ?? '',
+      (s.profileData as any)?.followers ?? '',
+      s.createdAt.toISOString().split('T')[0],
+    ]);
+
+    const csvLines = [
+      headers.join(','),
+      ...rows.map(row =>
+        row.map(cell =>
+          typeof cell === 'string' && cell.includes(',')
+            ? `"${cell}"`
+            : cell
+        ).join(',')
+      ),
+    ];
+
+    const csv = csvLines.join('\n');
+
+    return reply
+      .header('Content-Type', 'text/csv')
+      .header(
+        'Content-Disposition',
+        `attachment; filename="spotbot-analytics-${range}.csv"`
+      )
+      .send(csv);
   });
 }
 
-// Helper to get last 14 days as YYYY-MM-DD strings
-function getLast14Days(): string[] {
-  return Array.from({ length: 14 }, (_, i) => {
+function getDaysInRange(days: number): string[] {
+  return Array.from({ length: days }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
+    d.setDate(d.getDate() - (days - 1 - i));
     return d.toISOString().split('T')[0];
   });
 }
