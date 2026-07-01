@@ -32,16 +32,25 @@ export class InstagramClient {
   
   private async fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<any> {
     for (let i = 0; i <= retries; i++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15s timeout
       try {
-        const response = await fetch(url, options);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.json();
       } catch (error) {
-        console.error(`InstagramClient error (attempt ${i + 1}):`, error);
+        clearTimeout(timeoutId);
+        const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+        console.error(`InstagramClient error (attempt ${i + 1}):`, isTimeout ? 'Request timed out after 15s' : error);
         if (i === retries) {
-          throw new UpstreamError('Failed to fetch from Instagram API after multiple retries');
+          throw new UpstreamError(
+            isTimeout
+              ? 'Instagram API request timed out after multiple retries'
+              : 'Failed to fetch from Instagram API after multiple retries'
+          );
         }
         await new Promise(res => setTimeout(res, 2000));
       }

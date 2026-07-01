@@ -33,7 +33,7 @@ ${comments.map((c, i) => `${i + 1}. ${c}`).join('\n')}`;
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
-      });
+      }, { timeout: 30_000 }); // 30s timeout to prevent hanging
 
       const responseText = completion.choices[0]?.message?.content || '[]';
       

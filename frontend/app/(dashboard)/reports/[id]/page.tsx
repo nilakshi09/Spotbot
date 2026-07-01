@@ -1,17 +1,18 @@
 'use client'
-import { useEffect } from 'react'
+import { use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function ReportPage({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }> 
 }) {
+  const { id } = use(params)
   const router = useRouter()
   
   useEffect(() => {
-    router.replace(`/scan/${params.id}`)
-  }, [params.id, router])
+    router.replace(`/scan/${id}`)
+  }, [id, router])
 
   return (
     <div className="flex items-center justify-center min-h-screen">

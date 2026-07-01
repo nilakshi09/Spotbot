@@ -18,6 +18,16 @@ const instagramClient = new InstagramClient();
 const socialBladeClient = new SocialBladeClient();
 const openAIClient = new OpenAIClient();
 
+// Helper: update progress in Redis for frontend polling
+async function updateProgress(scanId: string, step: string, stepsCompleted: number, totalSteps: number) {
+  await redis.setex(`scan:progress:${scanId}`, 300, JSON.stringify({
+    step,
+    stepsCompleted,
+    totalSteps,
+    estimatedSecondsRemaining: Math.max(5, (totalSteps - stepsCompleted) * 5),
+  }));
+}
+
 export const scanWorker = new Worker<ScanJobData>(
   'scans',
   async (job: Job<ScanJobData>) => {
@@ -32,9 +42,21 @@ export const scanWorker = new Worker<ScanJobData>(
     const startTime = Date.now();
 
     try {
-      // 2. Run fraud engine
+      // Report progress: initializing
+      await updateProgress(scanId, 'initializing', 0, 6);
+
+      // 2. Run fraud engine with progress callbacks
       const engine = new FraudEngine(instagramClient, socialBladeClient, openAIClient);
-      const result = await engine.analyze(platform, handle);
+
+      // Wrap analyze() in a timeout as a last-resort safety net
+      const result = await Promise.race([
+        engine.analyze(platform, handle, async (step: string, stepsCompleted: number, totalSteps: number) => {
+          await updateProgress(scanId, step, stepsCompleted, totalSteps);
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Scan timed out after 80 seconds')), 80_000)
+        ),
+      ]);
 
       // 3. Update scan with results → 'completed'
       await db.update(scans).set({
@@ -53,6 +75,9 @@ export const scanWorker = new Worker<ScanJobData>(
         86400, // 24 hours
         JSON.stringify({ scanId, fraudScore: result.fraudScore, riskLevel: result.riskLevel })
       );
+
+      // Clean up progress key
+      await redis.del(`scan:progress:${scanId}`);
 
       const durationMs = Date.now() - startTime;
       businessLogger.scanCompleted(scanId, result.fraudScore, durationMs);
@@ -82,6 +107,8 @@ export const scanWorker = new Worker<ScanJobData>(
 
       return result;
     } catch (error) {
+      // Clean up progress key on failure
+      await redis.del(`scan:progress:${scanId}`).catch(() => {});
       console.error(`Error processing scan ${scanId}:`, error);
       throw error; // Let BullMQ retry
     }

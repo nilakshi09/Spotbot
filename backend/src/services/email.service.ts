@@ -129,7 +129,7 @@ export async function sendSalesLeadNotification(lead: {
   // Send to your own inbox (the email you signed up with on Resend)
   await resend.emails.send({
     from: 'Spotbot <onboarding@resend.dev>',
-    to: 'nilakshirahangdale09@gmail.com', // CHANGE TO YOUR ACTUAL EMAIL
+    to: 'rahangdalenilakshi04@gmail.com', // CHANGE TO YOUR ACTUAL EMAIL
     subject: `New Enterprise Lead: ${lead.companyName}`,
     html: `
       <h2>New Enterprise Sales Lead</h2>

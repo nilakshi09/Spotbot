@@ -38,12 +38,18 @@ export function ScanForm() {
 
     setIsLoading(true);
     try {
-      const data = await apiClient.post<{ id: string }>('/api/scans', {
+      const data = await apiClient.post<any>('/api/scans', {
         platform,
         handle,
       });
 
-      router.push(`/reports/${data.id}`);
+      const scanId = data?.id || data?.scan?.id || data?.data?.id;
+      if (!scanId) {
+        toast.error('Invalid response from server: Missing scan ID');
+        return;
+      }
+
+      router.push(`/scan/${scanId}`);
     } catch (error: any) {
       if (error instanceof ApiClientError && error.status === 402 && error.error.code === 'SCAN_LIMIT_REACHED') {
         setLimitDetails(error.error.details as any);

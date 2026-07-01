@@ -134,6 +134,7 @@ export default function ScanResultPage() {
           scanId={scan.id}
           handle={scan.handle}
           platform={scan.platform}
+          stepsCompleted={(scan as any).progress?.stepsCompleted}
         />
       </div>
     );

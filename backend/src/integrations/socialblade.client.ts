@@ -14,14 +14,18 @@ export class SocialBladeClient {
       return [];
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15s timeout
     try {
       const response = await fetch(`${this.baseUrl}?query=${encodeURIComponent(handle)}`, {
         headers: {
           'clientid': env.SOCIALBLADE_API_KEY,
           // 'token': ... depending on API setup
-        }
+        },
+        signal: controller.signal,
       });
       
+      clearTimeout(timeoutId);
       if (!response.ok) {
         console.warn(`SocialBlade API failed with status ${response.status}. Returning empty history.`);
         return [];
@@ -40,6 +44,7 @@ export class SocialBladeClient {
       
       return snapshots;
     } catch (error) {
+      clearTimeout(timeoutId);
       console.warn('SocialBlade request failed, returning empty follower history:', error);
       return [];
     }
