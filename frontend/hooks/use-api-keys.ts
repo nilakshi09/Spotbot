@@ -3,7 +3,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { api } from '@/lib/api-client'
+import { apiClient as api } from '@/lib/api-client'
 import type {
   ApiKeyItem,
   CreateApiKeyResponse,

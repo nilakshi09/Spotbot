@@ -4,7 +4,7 @@ import type {
   AdvancedAnalyticsData,
   AnalyticsRange,
 } from '@/types/analytics';
-import { useAuth } from '@/contexts/auth-context';
+import { getAccessToken } from '@/lib/auth';
 
 export function useAnalytics(range: AnalyticsRange = '30d') {
   return useQuery({
@@ -18,8 +18,6 @@ export function useAnalytics(range: AnalyticsRange = '30d') {
 }
 
 export function useExportAnalytics() {
-  const { getAccessToken } = useAuth();
-  
   return useMutation({
     mutationFn: async (range: AnalyticsRange) => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';

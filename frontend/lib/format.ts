@@ -54,3 +54,19 @@ export function timeAgo(dateStr: string): string {
 
   return isFuture ? `in ${label}` : `${label} ago`;
 }
+
+/**
+ * Format a number to a readable string
+ */
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(num);
+}
+
+/**
+ * Get a text color class based on the fraud score
+ */
+export function scoreColor(score: number): string {
+  if (score >= 70) return 'text-red-400';
+  if (score >= 40) return 'text-yellow-400';
+  return 'text-green-400';
+}
