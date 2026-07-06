@@ -38,11 +38,20 @@ export class InstagramClient {
         const response = await fetch(url, { ...options, signal: controller.signal });
         clearTimeout(timeoutId);
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            throw new UpstreamError(`Authentication failed with Instagram API (Status: ${response.status})`);
+          }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.json();
       } catch (error) {
         clearTimeout(timeoutId);
+        
+        // If it's already an UpstreamError (like our 401/403), throw immediately
+        if (error instanceof UpstreamError) {
+          throw error;
+        }
+
         const isTimeout = error instanceof DOMException && error.name === 'AbortError';
         console.error(`InstagramClient error (attempt ${i + 1}):`, isTimeout ? 'Request timed out after 15s' : error);
         if (i === retries) {

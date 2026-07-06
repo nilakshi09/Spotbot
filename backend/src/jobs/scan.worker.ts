@@ -1,4 +1,4 @@
-import { Worker, Job } from 'bullmq';
+import { Worker, Job, UnrecoverableError } from 'bullmq';
 import { db } from '../db/client.js';
 import { scans } from '../db/schema/scans.js';
 import { eq } from 'drizzle-orm';
@@ -106,9 +106,13 @@ export const scanWorker = new Worker<ScanJobData>(
       }
 
       return result;
-    } catch (error) {
-      // Clean up progress key on failure
-      await redis.del(`scan:progress:${scanId}`).catch(() => {});
+    } catch (error: any) {
+      if (error.message?.includes('Authentication failed')) {
+        await redis.del(`scan:progress:${scanId}`).catch(() => {});
+        console.error(`Unrecoverable error processing scan ${scanId}:`, error);
+        throw new UnrecoverableError(error.message);
+      }
+      // Do not clean up progress key on transient failure so the UI doesn't hang at step 0
       console.error(`Error processing scan ${scanId}:`, error);
       throw error; // Let BullMQ retry
     }
@@ -122,7 +126,8 @@ export const scanWorker = new Worker<ScanJobData>(
 
 // On failure after all retries:
 scanWorker.on('failed', async (job, err) => {
-  if (job && job.attemptsMade >= job.opts.attempts!) {
+  const isUnrecoverable = err.name === 'UnrecoverableError';
+  if (job && (job.attemptsMade >= (job.opts.attempts || 3) || isUnrecoverable)) {
     console.error(`Job ${job.id} completely failed after ${job.attemptsMade} attempts.`);
     
     businessLogger.scanFailed(job.data.scanId, err.message, job.attemptsMade);
