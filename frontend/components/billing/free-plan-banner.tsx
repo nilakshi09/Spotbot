@@ -35,7 +35,7 @@ export function FreePlanBanner({ trial }: { trial: TrialStatus }) {
           <div className="p-2 bg-indigo-500/20 rounded-lg">
             <Zap className="w-5 h-5 text-indigo-400" />
           </div>
-          <h2 className="text-xl font-bold text-white">You're on the Free Plan</h2>
+          <h2 className="text-xl font-bold text-white">You&apos;re on the Free Plan</h2>
         </div>
 
         <p className="text-indigo-200/80 mb-6 max-w-xl">

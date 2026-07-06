@@ -82,7 +82,7 @@ export function ScanVolumeChart({
           />
           <Tooltip
             contentStyle={tooltipStyle}
-            formatter={(value: any) => [`${value} scans`, 'Scans']}
+            formatter={(value) => [`${value} scans`, 'Scans']}
             labelFormatter={(label) => formatDateShort(String(label))}
           />
           <Area

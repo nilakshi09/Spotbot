@@ -45,8 +45,8 @@ export default function AnalyticsPage() {
     try {
       await exportAnalytics.mutateAsync(range)
       toast.success('Analytics exported successfully')
-    } catch (err: any) {
-      toast.error(err.message ?? 'Export failed')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? (err.message ?? 'Export failed') : 'Export failed')
     }
   }
 

@@ -23,6 +23,7 @@ export function ScanForm() {
 
   useEffect(() => {
     if (stats?.trial?.isTrialExpired) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Trigger modal when stats load
       setLimitDetails({
         used: stats.trial.scansUsed,
         limit: stats.trial.scanLimit,
@@ -38,7 +39,7 @@ export function ScanForm() {
 
     setIsLoading(true);
     try {
-      const data = await apiClient.post<any>('/api/scans', {
+      const data = await apiClient.post<{ id?: string; scan?: { id: string }; data?: { id: string } }>('/api/scans', {
         platform,
         handle,
       });
@@ -50,13 +51,13 @@ export function ScanForm() {
       }
 
       router.push(`/scan/${scanId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ApiClientError && error.status === 402 && error.error.code === 'SCAN_LIMIT_REACHED') {
-        setLimitDetails(error.error.details as any);
+        setLimitDetails(error.error.details as { used: number, limit: number, plan: string });
         setShowUpgradeWall(true);
         return;
       }
-      toast.error(error.message || 'Failed to start scan');
+      toast.error(error instanceof Error ? error.message : 'Failed to start scan');
     } finally {
       setIsLoading(false);
     }

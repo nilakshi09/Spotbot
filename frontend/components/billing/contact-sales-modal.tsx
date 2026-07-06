@@ -51,8 +51,8 @@ export function ContactSalesModal({
         message: message || undefined,
       })
       setSuccess(true)
-    } catch (err: any) {
-      setErrors({ submit: err.message ?? 'Failed to submit. Please try again.' })
+    } catch (err: unknown) {
+      setErrors({ submit: err instanceof Error ? (err.message ?? 'Failed to submit. Please try again.') : 'Failed to submit. Please try again.' })
     }
   }
 
@@ -109,7 +109,7 @@ export function ContactSalesModal({
                     Contact Sales
                   </Dialog.Title>
                   <Dialog.Description className="text-sm text-gray-400">
-                    Tell us about your needs — we'll build a custom plan
+                    Tell us about your needs — we&apos;ll build a custom plan
                   </Dialog.Description>
                 </div>
               </div>

@@ -125,5 +125,5 @@ function getAccessToken(): string | null {
   // Import from your auth lib
   // This should be the same pattern used in report-actions.tsx
   if (typeof window === 'undefined') return null
-  return (window as any).__spotbot_access_token ?? null
+  return (window as Window & { __spotbot_access_token?: string }).__spotbot_access_token ?? null
 }

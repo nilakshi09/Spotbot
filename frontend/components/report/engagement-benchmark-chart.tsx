@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { BarChart3 } from 'lucide-react';
-import { getLabel } from '@/lib/platform-labels';
+
 import type { Platform, EngagementRateDetails } from '@/types/scan';
 
 interface EngagementBenchmarkChartProps {

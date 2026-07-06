@@ -6,7 +6,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useRemoveMember, useChangeMemberRole } from '@/hooks/use-team'
 import { useToast } from '@/hooks/use-toast'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { Skeleton, SkeletonRow } from '@/components/ui/skeleton'
+import { SkeletonRow } from '@/components/ui/skeleton'
 import { timeAgo } from '@/lib/format'
 import type { TeamMember, MemberRole } from '@/types/team'
 
@@ -34,8 +34,8 @@ export function MembersTable({
       await removeMember.mutateAsync(confirmRemove.id)
       toast.success(`${confirmRemove.name} has been removed`)
       setConfirmRemove(null)
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to remove member')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove member')
     }
   }
 
@@ -43,8 +43,8 @@ export function MembersTable({
     try {
       await changeRole.mutateAsync({ userId, role: newRole })
       toast.success('Role updated successfully')
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to update role')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update role')
     }
   }
 

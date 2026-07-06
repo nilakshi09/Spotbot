@@ -17,7 +17,6 @@ export function CacheIndicator({
   cached,
   createdAt,
   expiresAt,
-  scanId,
   onRescan,
   isRescanning,
 }: CacheIndicatorProps) {

@@ -39,8 +39,8 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? (err.message || "An error occurred") : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +132,7 @@ export default function LoginPage() {
       <GoogleSignInButton label="Continue with Google" />
 
       <p className="mt-8 text-center text-sm text-muted">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/signup" className="text-cyan-400 hover:text-cyan-300 transition-colors">
           Sign up
         </Link>

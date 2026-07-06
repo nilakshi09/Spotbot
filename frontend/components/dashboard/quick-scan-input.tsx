@@ -6,7 +6,7 @@ import { Search, Camera, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient, ApiClientError } from '@/lib/api-client';
 import { UpgradeWall } from '../billing/upgrade-wall';
-import { getLabel } from '@/lib/platform-labels';
+
 import type { Platform } from '@/types/scan';
 
 export function QuickScanInput() {
@@ -23,7 +23,7 @@ export function QuickScanInput() {
 
     setIsLoading(true);
     try {
-      const data = await apiClient.post<any>('/api/scans', {
+      const data = await apiClient.post<{ id?: string; scan?: { id: string }; data?: { id: string } }>('/api/scans', {
         platform,
         handle,
       });
@@ -35,13 +35,13 @@ export function QuickScanInput() {
       }
 
       router.push(`/scan/${scanId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ApiClientError && error.status === 402 && error.error.code === 'SCAN_LIMIT_REACHED') {
-        setLimitDetails(error.error.details as any);
+        setLimitDetails(error.error.details as { used: number, limit: number, plan: string });
         setShowUpgradeWall(true);
         return;
       }
-      toast.error(error.message || 'Failed to start scan');
+      toast.error(error instanceof Error ? error.message : 'Failed to start scan');
     } finally {
       setIsLoading(false);
     }

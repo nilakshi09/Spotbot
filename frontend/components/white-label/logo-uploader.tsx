@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import Image from 'next/image'
 import { Upload } from 'lucide-react'
 import { useUploadLogo } from '@/hooks/use-white-label'
 import { useToast } from '@/hooks/use-toast'
@@ -42,8 +43,8 @@ export function LogoUploader({
     try {
       await uploadLogo.mutateAsync(file)
       toast.success('Logo uploaded successfully')
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to upload logo')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload logo')
     }
 
     // Reset input
@@ -57,9 +58,11 @@ export function LogoUploader({
         <div className="flex items-center gap-4">
           <div className="w-24 h-16 bg-white/5 border border-white/10
             rounded-lg flex items-center justify-center p-2">
-            <img
+            <Image
               src={currentLogoUrl}
               alt={companyName}
+              width={96}
+              height={64}
               className="max-w-full max-h-full object-contain"
             />
           </div>

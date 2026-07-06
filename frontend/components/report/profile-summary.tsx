@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { BadgeCheck } from 'lucide-react';
 import { PlatformBadge } from '@/components/ui/platform-badge';
 import { getLabel } from '@/lib/platform-labels';
@@ -68,9 +69,11 @@ export default function ProfileSummary({
       {/* Profile header */}
       <div className="flex items-start gap-5">
         {/* Avatar */}
-        <img
+        <Image
           src={profile.profilePictureUrl}
           alt={profile.displayName}
+          width={80}
+          height={80}
           className="w-20 h-20 rounded-full object-cover border-2 border-white/10 flex-shrink-0"
         />
 

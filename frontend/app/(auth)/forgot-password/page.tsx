@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
 
     try {
       await apiClient.post("/api/auth/forgot-password", { email });
-    } catch (err) {
+    } catch {
       // Ignore errors to prevent email enumeration
     } finally {
       setIsLoading(false);
@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
           Check your email
         </h1>
         <p className="text-muted text-sm mb-8 leading-relaxed">
-          If an account exists with that email, we've sent a password reset link.
+          If an account exists with that email, we&apos;ve sent a password reset link.
         </p>
         <Link
           href="/login"
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
           Forgot password?
         </h1>
         <p className="text-muted text-sm mt-1">
-          Enter your email and we'll send you a reset link
+          Enter your email and we&apos;ll send you a reset link
         </p>
       </div>
 

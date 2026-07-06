@@ -13,6 +13,7 @@ export function TrialNudgeBanner({ trial }: { trial: TrialStatus }) {
     if (trial.nudgeLevel === 'urgent') {
       const dismissed = sessionStorage.getItem('trial-nudge-dismissed');
       if (dismissed === 'true') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR + sessionStorage access requires this pattern to avoid hydration mismatch
         setIsVisible(false);
       }
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { setAccessToken, clearTokens } from '@/lib/auth';
 
@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     async function initAuth() {
@@ -55,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasGoogleAuth: userProfile.hasGoogleAuth,
           avatarUrl: userProfile.avatarUrl,
         });
-      } catch (err) {
+      } catch {
         clearTokens();
         setUser(null);
       } finally {
@@ -73,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/dashboard');
   };
 
-  const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+  const loginWithTokens = async (accessToken: string) => {
     setAccessToken(accessToken);
     
     // We can fetch user profile or let next refresh handle it
@@ -103,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await apiClient.post('/api/auth/logout');
-    } catch (e) {
+    } catch {
       // ignore
     }
     clearTokens();

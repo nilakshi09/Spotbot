@@ -24,13 +24,7 @@ export function ScanSearch({ filters, onFiltersChange }: ScanSearchProps) {
     })
   }, [debouncedSearch, filters, onFiltersChange])
 
-  // Call updateSearch whenever debouncedSearch changes
-  // useEffect is needed because updateSearch depends on debouncedSearch
-  // But to avoid ESLint warnings about missing dependencies in the useEffect
-  // we just do it inline inside a useEffect
-  import('react').then(({ useEffect }) => {
-    // We can't use dynamic imports like this cleanly for hooks, let's just use standard React
-  })
+
 
   const hasActiveFilters = !!(
     filters.handle ||

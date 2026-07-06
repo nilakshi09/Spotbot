@@ -78,8 +78,8 @@ export function AvgScoreChart({ data, isLoading }: AvgScoreChartProps) {
             />
             <Tooltip
               contentStyle={tooltipStyle}
-              formatter={(value: any) =>
-                value !== null ? [`${value}/100`, 'Avg Score'] : ['—', 'No data']
+              formatter={(value) =>
+                value != null ? [`${value}/100`, 'Avg Score'] : ['—', 'No data']
               }
               labelFormatter={(label) => formatDateShort(String(label))}
             />

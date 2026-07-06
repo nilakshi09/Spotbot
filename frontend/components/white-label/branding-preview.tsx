@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { BrandingConfig } from '@/types/white-label'
 
 interface BrandingPreviewProps {
@@ -26,10 +27,12 @@ export function BrandingPreview({ branding }: BrandingPreviewProps) {
           {/* Logo / company name */}
           <div className="flex items-center gap-2">
             {branding.logoUrl && !branding.hideSpotbotLogo ? (
-              <img
+              <Image
                 src={branding.logoUrl}
                 alt={branding.companyName}
-                className="h-6 object-contain"
+                width={120}
+                height={24}
+                className="h-6 w-auto object-contain"
               />
             ) : (
               !branding.hideSpotbotLogo && (

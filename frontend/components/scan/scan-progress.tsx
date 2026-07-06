@@ -34,7 +34,7 @@ const INSTAGRAM_STEPS = [
 
 const MAX_WAIT_SECONDS = 120; // Show timeout warning after 2 minutes
 
-export default function ScanProgress({ scanId, handle, platform, stepsCompleted }: ScanProgressProps) {
+export default function ScanProgress({ handle, platform, stepsCompleted }: ScanProgressProps) {
   const [timerStep, setTimerStep] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const steps = platform === 'youtube' ? YOUTUBE_STEPS : INSTAGRAM_STEPS;

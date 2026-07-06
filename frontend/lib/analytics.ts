@@ -1,10 +1,12 @@
 // Lightweight product analytics wrapper
 // Uses PostHog if configured, no-ops otherwise
 
+import type { PostHog } from 'posthog-js'
+
 const isProd = process.env.NEXT_PUBLIC_APP_ENV === 'production'
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 
-let posthog: any = null
+let posthog: PostHog | null = null
 
 export async function initAnalytics() {
   if (!posthogKey || !isProd) return

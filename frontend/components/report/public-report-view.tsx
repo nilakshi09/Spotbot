@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { PlatformBadge } from '@/components/ui/platform-badge'
@@ -20,11 +21,6 @@ interface PublicReportViewProps {
   token: string
 }
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
 
 function getRiskColor(level?: string): string {
   switch (level) {
@@ -60,7 +56,7 @@ function getRiskDescription(level?: string): string {
   }
 }
 
-export function PublicReportView({ scan, token }: PublicReportViewProps) {
+export function PublicReportView({ scan }: PublicReportViewProps) {
   const platform: Platform = scan.platform || 'instagram';
   const platformLabel = platform === 'youtube' ? 'YouTube' : 'Instagram';
   const branding = scan.branding ?? DEFAULT_BRANDING;
@@ -77,10 +73,12 @@ export function PublicReportView({ scan, token }: PublicReportViewProps) {
           {/* Left: Company branding */}
           <div className="flex items-center gap-3">
             {branding.logoUrl && !branding.hideSpotbotLogo ? (
-              <img
+              <Image
                 src={branding.logoUrl}
                 alt={branding.companyName}
-                className="h-8 object-contain"
+                width={120}
+                height={32}
+                className="h-8 w-auto object-contain"
               />
             ) : (
               !branding.hideSpotbotLogo && (

@@ -66,8 +66,8 @@ export default function ApiKeysPage() {
       })
       setNewKeyData(result)
       setShowCreateModal(false)
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to create API key')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? (err.message ?? 'Failed to create API key') : 'Failed to create API key')
     }
   }
 
@@ -251,7 +251,7 @@ function NewKeyDisplay({
           className="text-sm text-gray-400 hover:text-white
             transition-colors"
         >
-          I've saved it — dismiss
+          I&apos;ve saved it — dismiss
         </button>
       </div>
     </div>
@@ -493,7 +493,7 @@ function CreateApiKeyModal({
 
 function QuickStartGuide() {
   const [copied, setCopied] = useState<string | null>(null)
-  const { toast } = useToast()
+
 
   async function copy(text: string, id: string) {
     await copyToClipboard(text)

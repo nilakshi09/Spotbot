@@ -32,7 +32,7 @@ function AcceptInviteHandler() {
     if (!token || token.length !== 64) {
       router.replace('/')
     }
-  }, [token])
+  }, [token, router])
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {}
@@ -66,8 +66,8 @@ function AcceptInviteHandler() {
         // Existing user — redirect to login
         router.push('/login?invited=true')
       }
-    } catch (err: any) {
-      setErrors({ submit: err.message ?? 'Failed to accept invitation' })
+    } catch (err: unknown) {
+      setErrors({ submit: err instanceof Error ? (err.message ?? 'Failed to accept invitation') : 'Failed to accept invitation' })
     }
   }
 
@@ -117,7 +117,7 @@ function AcceptInviteHandler() {
         <div className="text-center">
           <div className="text-3xl mb-4">👋</div>
           <h2 className="text-xl font-bold text-white mb-2">
-            You're invited to join
+            You&apos;re invited to join
           </h2>
           <div className="text-indigo-400 font-semibold text-lg mb-1">
             {invitation.orgName}

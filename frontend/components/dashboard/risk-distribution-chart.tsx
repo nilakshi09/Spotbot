@@ -6,7 +6,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from 'recharts'
 import { chartColors, tooltipStyle } from '@/lib/chart-theme'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -91,8 +90,8 @@ export function RiskDistributionChart({
             </Pie>
             <Tooltip
               contentStyle={tooltipStyle}
-              formatter={(value: any, name: any) => [
-                `${value} scans (${Math.round((Number(value) / total) * 100)}%)`,
+              formatter={(value, name) => [
+                `${Number(value)} scans (${Math.round((Number(value) / total) * 100)}%)`,
                 name,
               ]}
             />

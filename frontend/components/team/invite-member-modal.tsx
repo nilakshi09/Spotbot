@@ -45,11 +45,15 @@ export function InviteMemberModal({
       setSuccess(true)
       setEmail('')
       setRole('member')
-    } catch (err: any) {
-      if (err.code === 'CONFLICT') {
-        setEmailError(err.message)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if ((err as Error & { code?: string }).code === 'CONFLICT') {
+          setEmailError(err.message)
+        } else {
+          toast.error(err.message)
+        }
       } else {
-        toast.error(err.message ?? 'Failed to send invitation')
+        toast.error('Failed to send invitation')
       }
     }
   }
@@ -78,7 +82,7 @@ export function InviteMemberModal({
             Invite Team Member
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-400 mb-6">
-            They'll receive an email with a link to join your organization
+            They&apos;ll receive an email with a link to join your organization
           </Dialog.Description>
 
           {success ? (

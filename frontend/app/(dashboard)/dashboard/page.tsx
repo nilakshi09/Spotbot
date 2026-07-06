@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Search, Activity, AlertTriangle } from "lucide-react";
+
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";

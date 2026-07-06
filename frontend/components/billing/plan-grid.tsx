@@ -24,7 +24,7 @@ export function PlanGrid({ currentPlan, isLoading }: { currentPlan: string, isLo
   if (currentPlan === 'pro' || currentPlan === 'enterprise') {
     return (
       <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
-        <h2 className="text-lg font-medium text-white mb-2">You're on our highest self-serve plan.</h2>
+        <h2 className="text-lg font-medium text-white mb-2">You&apos;re on our highest self-serve plan.</h2>
         <p className="text-gray-400 mb-4">Need more? Contact us about Enterprise.</p>
         <button 
           onClick={() => setShowContactModal(true)}

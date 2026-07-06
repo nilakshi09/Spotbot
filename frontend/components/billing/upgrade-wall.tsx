@@ -16,7 +16,7 @@ interface UpgradeWallProps {
   customMessage?: string;
 }
 
-export function UpgradeWall({ used, limit, plan, onDismiss, isOpen = true, customMessage }: UpgradeWallProps) {
+export function UpgradeWall({ limit, plan, onDismiss, isOpen = true, customMessage }: UpgradeWallProps) {
   const router = useRouter();
 
   const handleBack = () => {

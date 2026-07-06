@@ -27,7 +27,7 @@ export function StripeRedirectOverlay({ isOpen }: { isOpen: boolean }) {
 
             <h3 className="text-xl font-bold text-white mb-2">Redirecting to Stripe...</h3>
             <p className="text-gray-400 text-sm mb-6">
-              You're being sent to our secure payment partner to complete your request.
+              You&apos;re being sent to our secure payment partner to complete your request.
             </p>
 
             <div className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-widest">

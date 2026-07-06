@@ -54,7 +54,7 @@ export function CheckoutConfirmModal({
 
             <div className="text-xs text-gray-500 text-center space-y-1">
               <p>Billed monthly. Cancel anytime.</p>
-              <p>You'll be redirected to Stripe's secure checkout.</p>
+              <p>You&apos;ll be redirected to Stripe&apos;s secure checkout.</p>
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { 
   LayoutDashboard, 
@@ -199,9 +200,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-sm font-bold shrink-0 relative overflow-hidden">
               {getInitials(user.name)}
               {user?.avatarUrl && (
-                <img
+                <Image
                   src={user.avatarUrl}
                   alt={user.name}
+                  fill
                   className="absolute inset-0 w-full h-full object-cover"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
@@ -250,9 +252,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 {getInitials(user.name)}
                 {user?.avatarUrl && (
-                  <img
+                  <Image
                     src={user.avatarUrl}
                     alt={user.name}
+                    fill
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />

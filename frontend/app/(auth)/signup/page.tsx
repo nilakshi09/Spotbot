@@ -48,9 +48,9 @@ export default function SignupPage() {
 
     try {
       await signup(email, password, name);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup Error:", error);
-      setError(error.message || "An error occurred");
+      setError(error instanceof Error ? (error.message || "An error occurred") : "An error occurred");
     } finally {
       setIsLoading(false);
     }

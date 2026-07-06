@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
-import Link from "next/link";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 
@@ -46,8 +46,8 @@ function ResetPasswordForm() {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password. The link may have expired.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? (err.message || "Failed to reset password. The link may have expired.") : "Failed to reset password. The link may have expired.");
     } finally {
       setIsLoading(false);
     }

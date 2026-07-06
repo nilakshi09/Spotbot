@@ -26,11 +26,7 @@ const fadeUp = {
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
 };
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
+
 
 function getRiskColor(level?: string): string {
   switch (level) {
@@ -76,9 +72,9 @@ export default function ScanResultPage() {
             if (pollInterval) clearInterval(pollInterval);
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (mounted) {
-          setError(err.message || 'Failed to load scan');
+          setError(err instanceof Error ? (err.message || 'Failed to load scan') : 'Failed to load scan');
           setIsLoading(false);
         }
       }
@@ -134,7 +130,7 @@ export default function ScanResultPage() {
           scanId={scan.id}
           handle={scan.handle}
           platform={scan.platform}
-          stepsCompleted={(scan as any).progress?.stepsCompleted}
+          stepsCompleted={(scan as ScanResult & { progress?: { stepsCompleted?: number } }).progress?.stepsCompleted}
         />
       </div>
     );

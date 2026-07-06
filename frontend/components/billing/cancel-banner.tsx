@@ -22,7 +22,7 @@ export function CancelBanner({
             Your subscription is set to cancel on {nextBillingDate ? new Date(nextBillingDate).toLocaleDateString() : 'the next billing date'}
           </p>
           <p className="text-amber-500/70 text-xs mt-1">
-            You'll keep access to your current plan until then. After that, your account will be downgraded to the free plan.
+            You&apos;ll keep access to your current plan until then. After that, your account will be downgraded to the free plan.
           </p>
         </div>
       </div>

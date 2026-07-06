@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import {
   useBranding,
@@ -16,7 +16,7 @@ import { Palette } from 'lucide-react'
 
 export default function WhiteLabelPage() {
   const { data: stats } = useDashboardStats()
-  const { data: branding, isLoading } = useBranding()
+  const { data: branding } = useBranding()
   const updateBranding = useUpdateBranding()
   const resetBranding = useResetBranding()
   const { toast } = useToast()
@@ -31,10 +31,11 @@ export default function WhiteLabelPage() {
   const [reportHeaderText, setReportHeaderText] = useState('')
   const [hidePoweredBy, setHidePoweredBy] = useState(false)
   const [hideLogo, setHideLogo] = useState(false)
-  const [isDirty, setIsDirty] = useState(false)
+  const [prevBranding, setPrevBranding] = useState(branding)
 
   // Populate form from fetched branding
-  useEffect(() => {
+  if (branding !== prevBranding) {
+    setPrevBranding(branding)
     if (branding) {
       setCompanyName(branding.companyName)
       setPrimaryColor(branding.primaryColor)
@@ -44,25 +45,18 @@ export default function WhiteLabelPage() {
       setHidePoweredBy(branding.hidePoweredBySpotbot)
       setHideLogo(branding.hideSpotbotLogo)
     }
-  }, [branding])
+  }
 
   // Track changes
-  useEffect(() => {
-    if (!branding) return
-    const dirty =
-      companyName !== branding.companyName ||
-      primaryColor !== branding.primaryColor ||
-      accentColor !== branding.accentColor ||
-      reportFooterText !== branding.reportFooterText ||
-      reportHeaderText !== branding.reportHeaderText ||
-      hidePoweredBy !== branding.hidePoweredBySpotbot ||
-      hideLogo !== branding.hideSpotbotLogo
-    setIsDirty(dirty)
-  }, [
-    companyName, primaryColor, accentColor,
-    reportFooterText, reportHeaderText,
-    hidePoweredBy, hideLogo, branding,
-  ])
+  const isDirty = branding ? (
+    companyName !== branding.companyName ||
+    primaryColor !== branding.primaryColor ||
+    accentColor !== branding.accentColor ||
+    reportFooterText !== branding.reportFooterText ||
+    reportHeaderText !== branding.reportHeaderText ||
+    hidePoweredBy !== branding.hidePoweredBySpotbot ||
+    hideLogo !== branding.hideSpotbotLogo
+  ) : false
 
   async function handleSave() {
     try {
@@ -76,9 +70,8 @@ export default function WhiteLabelPage() {
         hideSpotbotLogo: hideLogo,
       })
       toast.success('Branding settings saved')
-      setIsDirty(false)
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to save branding')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? (err.message ?? 'Failed to save branding') : 'Failed to save branding')
     }
   }
 
