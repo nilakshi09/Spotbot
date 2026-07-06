@@ -71,7 +71,7 @@ export function createAuthService(fastify: FastifyInstance) {
       });
     },
 
-    async generateTokenPair(user: any, org: any) {
+    async generateTokenPair(user: { id: string; email: string; organizationId: string; role: string; name: string }, org: { plan: string; id: string }) {
       const payload = {
         sub: user.id,
         email: user.email,

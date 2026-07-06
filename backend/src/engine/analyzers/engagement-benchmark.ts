@@ -31,7 +31,7 @@ export class EngagementBenchmarkAnalyzer {
 
     const ratio = accountER / benchmarkER;
 
-    let score = 0;
+    let score: number;
     
     // lerp function helper
     const lerp = (start: number, end: number, t: number) => start + t * (end - start);
@@ -107,7 +107,7 @@ export class EngagementBenchmarkAnalyzer {
     const ratio = accountER / benchmarkER;
 
     // Use same scoring logic as Instagram
-    let score = 0;
+    let score: number;
     if (ratio >= 0.8) score = Math.round((1 - ratio / 1.0) * 20);
     else if (ratio >= 0.6) score = Math.round(20 + ((0.8 - ratio) / 0.2) * 20);
     else if (ratio >= 0.4) score = Math.round(40 + ((0.6 - ratio) / 0.2) * 20);

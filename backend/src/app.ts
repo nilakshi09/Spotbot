@@ -87,13 +87,14 @@ export async function buildApp() {
     track.apiRequest();
     try {
       Sentry.setTag('requestId', request.id);
-      if ((request as any).user) {
+      const reqWithUser = request as { user?: { sub: string; email: string } };
+      if (reqWithUser.user) {
         Sentry.setUser({
-          id: (request as any).user.sub,
-          email: (request as any).user.email,
+          id: reqWithUser.user.sub,
+          email: reqWithUser.user.email,
         });
       }
-    } catch (e) {
+    } catch {
       // ignore Sentry errors
     }
   });

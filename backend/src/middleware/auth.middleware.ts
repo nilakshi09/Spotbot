@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyRequest } from 'fastify';
 import { UnauthorizedError } from './error-handler.js';
 
 export interface JwtPayload {
@@ -27,7 +27,7 @@ export async function verifyAccessToken(request: FastifyRequest) {
       plan: payload.plan,
     };
     console.log('JWT verified, req.user:', request.user);
-  } catch (err) {
+  } catch {
     throw new UnauthorizedError('Invalid or expired access token');
   }
 }

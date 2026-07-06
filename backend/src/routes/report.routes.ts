@@ -1,14 +1,12 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { scans } from '../db/schema/scans.js';
 import { reports } from '../db/schema/reports.js';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
 import { PdfService } from '../services/pdf.service.js';
 import { ScanService } from '../services/scan.service.js';
 import { reportShareService } from '../services/report-share.service.js';
-import { env } from '../config/env.js';
 import { redis } from '../config/redis.js';
 import { AppError } from '../middleware/error-handler.js';
 import { whiteLabelService } from '../services/white-label.service.js';
@@ -48,7 +46,7 @@ export default async function reportRoutes(app: FastifyInstance) {
     protectedApp.addHook('onRequest', verifyAccessToken);
 
     protectedApp.get('/reports/:scanId', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).sub;
+      const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
       const { scanId } = request.params;
 
       const scan = await scanService.getScan(scanId, userId);
@@ -71,14 +69,14 @@ export default async function reportRoutes(app: FastifyInstance) {
           displayName: '', followers: 0, following: 0, posts: 0, bio: '', profilePictureUrl: '', isVerified: false, category: ''
         },
         signals: scan.subScores || {},
-        followerHistory: (scan.rawData as any)?.followerHistory || [],
+        followerHistory: (scan.rawData as { followerHistory?: unknown[] })?.followerHistory || [],
         createdAt: scan.createdAt,
         expiresAt: scan.expiresAt
       });
     });
 
     protectedApp.get('/reports/:scanId/pdf', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).sub;
+      const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
       const { scanId } = request.params;
 
       const scan = await scanService.getScan(scanId, userId);
@@ -128,7 +126,7 @@ export default async function reportRoutes(app: FastifyInstance) {
     // ─── POST /api/reports/:scanId/share ──────────────────────────────────
     // Generate a public share link for a report
     protectedApp.post('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).sub;
+      const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
       const { scanId } = request.params;
       const body = ShareSchema.parse(request.body);
 
@@ -147,7 +145,7 @@ export default async function reportRoutes(app: FastifyInstance) {
     // ─── DELETE /api/reports/:scanId/share ────────────────────────────────
     // Revoke an existing share link
     protectedApp.delete('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).sub;
+      const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
       const { scanId } = request.params;
 
       const result = await reportShareService.revokeShareLink(
@@ -161,7 +159,7 @@ export default async function reportRoutes(app: FastifyInstance) {
     // ─── GET /api/reports/:scanId/share ───────────────────────────────────
     // Get current share status for a report
     protectedApp.get('/reports/:scanId/share', async (request: FastifyRequest<{ Params: { scanId: string } }>, reply: FastifyReply) => {
-      const userId = (request.user as any).sub;
+      const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
       const { scanId } = request.params;
 
       const status = await reportShareService.getShareStatus(

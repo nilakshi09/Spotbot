@@ -1,6 +1,5 @@
 import { db } from '../db/client.js';
 import { scans } from '../db/schema/scans.js';
-import { organizations } from '../db/schema/organizations.js';
 import { users } from '../db/schema/users.js';
 import { eq, and, sql, desc, asc, ilike, gte, lte, inArray, SQL } from 'drizzle-orm';
 import { redis } from '../config/redis.js';
@@ -128,21 +127,21 @@ export class ScanService {
     }
 
     const conditions = [baseCondition];
-    if (filters.platform) conditions.push(eq(scans.platform, filters.platform as any));
-    if (filters.riskLevel) conditions.push(eq(scans.riskLevel, filters.riskLevel as any));
-    if (filters.status) conditions.push(eq(scans.status, filters.status as any));
+    if (filters.platform) conditions.push(eq(scans.platform, filters.platform as 'instagram' | 'youtube'));
+    if (filters.riskLevel) conditions.push(eq(scans.riskLevel, filters.riskLevel as 'low' | 'medium' | 'high'));
+    if (filters.status) conditions.push(eq(scans.status, filters.status as 'pending' | 'processing' | 'completed' | 'failed'));
     if (filters.handle) conditions.push(ilike(scans.handle, `%${filters.handle}%`));
     if (filters.dateFrom) conditions.push(gte(scans.createdAt, new Date(filters.dateFrom)));
     if (filters.dateTo) conditions.push(lte(scans.createdAt, new Date(filters.dateTo)));
     if (filters.scoreMin !== undefined) conditions.push(gte(scans.fraudScore, filters.scoreMin));
     if (filters.scoreMax !== undefined) conditions.push(lte(scans.fraudScore, filters.scoreMax));
 
-    const orderByMap: Record<string, any> = {
+    const orderByMap: Record<string, unknown> = {
       created_at: scans.createdAt,
       fraud_score: scans.fraudScore,
       handle: scans.handle,
     };
-    const orderByCol = orderByMap[filters.orderBy ?? 'created_at'] || scans.createdAt;
+    const orderByCol = (orderByMap[filters.orderBy ?? 'created_at'] || scans.createdAt) as import('drizzle-orm').SQL;
     const orderDir = filters.order === 'asc' ? asc : desc;
 
     const data = await db.select().from(scans)

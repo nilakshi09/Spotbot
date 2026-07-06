@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { z } from 'zod';
+
 import { reportShareService } from '../services/report-share.service.js';
 import { NotFoundError, AppError } from '../middleware/error-handler.js';
 import { db } from '../db/client.js';
@@ -44,7 +44,7 @@ export default async function publicRoutes(app: FastifyInstance) {
           displayName: '', followers: 0, following: 0, posts: 0, bio: '', profilePictureUrl: '', isVerified: false, category: ''
         },
         signals: scan.subScores || {},
-        followerHistory: (scan.rawData as any)?.followerHistory || [],
+        followerHistory: (scan.rawData as { followerHistory?: unknown[] })?.followerHistory || [],
         createdAt: scan.createdAt,
         expiresAt: scan.expiresAt,
         shareInfo: {

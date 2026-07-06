@@ -56,7 +56,7 @@ export class YouTubeClient {
       searchUrl.searchParams.set('key', this.apiKey);
 
       const searchRes = await fetch(searchUrl.toString());
-      const searchData: any = await searchRes.json();
+      const searchData = (await searchRes.json()) as { items?: { snippet: { channelId: string } }[] };
 
       if (!searchData.items || searchData.items.length === 0) {
         throw new Error(`YouTube channel not found: ${cleanHandle}`);
@@ -85,7 +85,21 @@ export class YouTubeClient {
     channelUrl.searchParams.set('key', this.apiKey);
 
     const channelRes = await fetch(channelUrl.toString());
-    const channelData: any = await channelRes.json();
+    const channelData = (await channelRes.json()) as {
+      items?: {
+        snippet: {
+          title?: string;
+          description?: string;
+          thumbnails?: { high?: { url?: string }; default?: { url?: string } };
+          defaultLanguage?: string;
+        };
+        statistics: {
+          subscriberCount?: string;
+          videoCount?: string;
+          viewCount?: string;
+        };
+      }[];
+    };
 
     if (!channelData.items || channelData.items.length === 0) {
       throw new Error(`Channel data not found for ID: ${channelId}`);
@@ -127,14 +141,14 @@ export class YouTubeClient {
       searchUrl.searchParams.set('key', this.apiKey);
 
       const searchRes = await fetch(searchUrl.toString());
-      const searchData: any = await searchRes.json();
+      const searchData = (await searchRes.json()) as { items?: { id: { videoId?: string } }[] };
 
       if (!searchData.items || searchData.items.length === 0) {
         return [];
       }
 
       const videoIds = searchData.items
-        .map((item: any) => item.id.videoId)
+        .map((item: { id: { videoId?: string } }) => item.id.videoId)
         .filter(Boolean)
         .join(',');
 
@@ -145,9 +159,9 @@ export class YouTubeClient {
       videoUrl.searchParams.set('key', this.apiKey);
 
       const videoRes = await fetch(videoUrl.toString());
-      const videoData: any = await videoRes.json();
+      const videoData = (await videoRes.json()) as { items?: { id: string; snippet?: { title?: string; publishedAt?: string }; statistics?: { viewCount?: string; likeCount?: string; commentCount?: string } }[] };
 
-      return (videoData.items ?? []).map((video: any) => ({
+      return (videoData.items ?? []).map((video: { id: string; snippet?: { title?: string; publishedAt?: string }; statistics?: { viewCount?: string; likeCount?: string; commentCount?: string } }) => ({
         id: video.id,
         title: video.snippet?.title ?? '',
         publishedAt: video.snippet?.publishedAt ?? '',
@@ -181,10 +195,10 @@ export class YouTubeClient {
           commentsUrl.searchParams.set('key', this.apiKey);
 
           const commentsRes = await fetch(commentsUrl.toString());
-          const commentsData: any = await commentsRes.json();
+          const commentsData = (await commentsRes.json()) as { items?: { snippet?: { topLevelComment?: { snippet?: { textDisplay?: string; authorDisplayName?: string; likeCount?: number; publishedAt?: string } } } }[] };
 
           if (commentsData.items) {
-            const comments = commentsData.items.map((item: any) => ({
+            const comments = commentsData.items.map((item: { snippet?: { topLevelComment?: { snippet?: { textDisplay?: string; authorDisplayName?: string; likeCount?: number; publishedAt?: string } } } }) => ({
               text: item.snippet?.topLevelComment?.snippet?.textDisplay ?? '',
               authorName:
                 item.snippet?.topLevelComment?.snippet?.authorDisplayName ?? '',

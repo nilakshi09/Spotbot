@@ -71,7 +71,7 @@ export function globalErrorHandler(
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Invalid input',
-        details: (error as any).issues,
+        details: (error as { issues?: unknown }).issues,
       },
     });
   }
@@ -83,7 +83,7 @@ export function globalErrorHandler(
       requestId: request.id,
       path: request.url,
       method: request.method,
-      userId: (request as any).user?.sub,
+      userId: (request as FastifyRequest & { user?: { sub?: string } }).user?.sub,
     });
   }
 

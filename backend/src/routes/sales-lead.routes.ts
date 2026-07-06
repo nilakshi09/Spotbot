@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { z } from 'zod'
+
 import { salesLeadService } from '../services/sales-lead.service.js'
 
 export default async function salesLeadRoutes(
@@ -42,9 +42,9 @@ export default async function salesLeadRoutes(
     if (authHeader?.startsWith('Bearer ')) {
       try {
         const token = authHeader.split(' ')[1]
-        const payload = app.jwt.verify(token) as any
-        userId = payload.sub
-        orgId = payload.orgId
+        const payload = app.jwt.verify(token) as { sub?: string; orgId?: string };
+        userId = payload.sub ?? null
+        orgId = payload.orgId ?? null
       } catch {
         // Not logged in or invalid token — proceed as anonymous lead
       }

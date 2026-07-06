@@ -1,13 +1,12 @@
 import crypto from 'crypto';
 import { db } from '../db/client.js';
 import { invitations, users, organizations } from '../db/schema/index.js';
-import { eq, and, ne } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { sendInvitationEmail } from './email.service.js';
 import { logger } from '../utils/logger.js';
 import { env } from '../config/env.js';
 import { ConflictError, InvitationExpiredError, InvitationAlreadyAcceptedError } from '../utils/errors.js';
 import { AppError, NotFoundError } from '../middleware/error-handler.js';
-import { z } from 'zod';
 
 export class TeamService {
 

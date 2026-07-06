@@ -1,7 +1,7 @@
 import { db } from '../db/client.js'
 import { users, organizations } from '../db/schema/index.js'
 import { eq, or } from 'drizzle-orm'
-import { businessLogger, logger } from '../utils/logger.js'
+import { logger } from '../utils/logger.js'
 import { AppError, NotFoundError } from '../middleware/error-handler.js'
 
 interface GoogleUserInfo {
@@ -34,7 +34,7 @@ export class GoogleOAuthService {
     return (await response.json()) as GoogleUserInfo
   }
 
-  async handleCallback(accessToken: string, authService: any) {
+  async handleCallback(accessToken: string, authService: ReturnType<typeof import('./auth.service.js').createAuthService>) {
     const googleUser = await this.getGoogleUserInfo(accessToken)
 
     if (!googleUser.verified_email) {

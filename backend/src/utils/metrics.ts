@@ -1,5 +1,4 @@
 import { logger } from './logger.js'
-import { env } from '../config/env.js'
 
 interface Metrics {
   scansCreated: number

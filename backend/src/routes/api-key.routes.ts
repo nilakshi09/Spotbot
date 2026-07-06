@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify'
-import { z } from 'zod'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+
 import { apiKeyService } from '../services/api-key.service.js'
 import { verifyAccessToken } from '../middleware/auth.middleware.js'
 import { requireAdmin } from '../middleware/role.middleware.js'
@@ -13,7 +13,7 @@ export default async function apiKeyRoutes(
   app.get('/', {
     preHandler: [verifyAccessToken],
   }, async (req, reply) => {
-    const keys = await apiKeyService.listApiKeys((req as any).user.orgId)
+    const keys = await apiKeyService.listApiKeys((req as FastifyRequest & { user: { orgId: string } }).user.orgId)
     return reply.send({ data: keys })
   })
 
@@ -38,8 +38,8 @@ export default async function apiKeyRoutes(
     }
 
     const result = await apiKeyService.createApiKey(
-      (req as any).user.orgId,
-      (req as any).user.sub,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.sub,
       name,
       expiresInDays,
     )
@@ -61,7 +61,7 @@ export default async function apiKeyRoutes(
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const result = await apiKeyService.revokeApiKey(
-      (req as any).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string } }).user.orgId,
       id,
     )
     return reply.send(result)
@@ -81,8 +81,8 @@ export default async function apiKeyRoutes(
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const result = await apiKeyService.rotateApiKey(
-      (req as any).user.orgId,
-      (req as any).user.sub,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.sub,
       id,
     )
     return reply.status(201).send(result)

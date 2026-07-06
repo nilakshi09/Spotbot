@@ -10,7 +10,7 @@ import { openApiSpec } from '../docs/openapi.js';
 export default async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (req, reply) => {
     // const checks: Record<string, unknown> = {}
-    const checks: Record<string, any> = {}
+    const checks: Record<string, unknown> = {}
     let overallStatus: 'ok' | 'degraded' | 'down' = 'ok'
 
     // Database check
@@ -18,7 +18,7 @@ export default async function healthRoutes(app: FastifyInstance) {
     try {
       await db.execute(sql`SELECT 1`)
       checks.database = { status: 'ok', latencyMs: Date.now() - dbStart }
-    } catch (error) {
+    } catch {
       checks.database = {
         status: 'error',
         latencyMs: Date.now() - dbStart,
@@ -32,7 +32,7 @@ export default async function healthRoutes(app: FastifyInstance) {
     try {
       await redis.ping()
       checks.redis = { status: 'ok', latencyMs: Date.now() - redisStart }
-    } catch (error) {
+    } catch {
       checks.redis = {
         status: 'error',
         latencyMs: Date.now() - redisStart,
@@ -68,7 +68,7 @@ export default async function healthRoutes(app: FastifyInstance) {
     ? 'degraded'
     : overallStatus
 }
-    } catch (error) {
+    } catch {
       checks.queue = { status: 'error', error: 'Queue unreachable' }
       overallStatus = overallStatus === 'ok' ? 'degraded' : overallStatus
     }

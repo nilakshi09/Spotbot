@@ -21,7 +21,7 @@ export default async function userRoutes(app: FastifyInstance) {
   app.addHook('onRequest', verifyAccessToken);
 
   app.get('/me', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).sub;
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
     const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     
     if (!userRecord[0]) {
@@ -44,8 +44,8 @@ export default async function userRoutes(app: FastifyInstance) {
   });
 
   app.get('/me/stats', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).sub;
-    const orgId = (request.user as any).orgId;
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
+    const orgId = (request as FastifyRequest & { user: { orgId: string } }).user.orgId;
 
     if (!orgId) {
       throw new UnauthorizedError('No organization found');
@@ -82,13 +82,13 @@ export default async function userRoutes(app: FastifyInstance) {
   });
 
   app.get('/me/quota', async (request: FastifyRequest, reply: FastifyReply) => {
-    const orgId = (request.user as any).orgId;
+    const orgId = (request as FastifyRequest & { user: { orgId: string } }).user.orgId;
     const status = await quotaService.getQuotaStatus(orgId);
     return reply.send(status);
   });
 
   app.post('/me/change-password', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).sub;
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
     const body = ChangePasswordSchema.parse(request.body);
 
     const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -108,8 +108,8 @@ export default async function userRoutes(app: FastifyInstance) {
   });
 
   app.delete('/me', async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = (request.user as any).sub;
-    const orgId = (request.user as any).orgId;
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
+    const orgId = (request as FastifyRequest & { user: { orgId: string } }).user.orgId;
 
     const userRecord = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!userRecord[0]) return reply.status(404).send({ error: 'User not found' });
@@ -152,9 +152,9 @@ export default async function userRoutes(app: FastifyInstance) {
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { range } = request.query as { range: '7d' | '30d' | '90d' };
-    const userId = (request.user as any).sub;
-    const orgId = (request.user as any).orgId;
-    const isAdmin = (request.user as any).role === 'admin';
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
+    const orgId = (request as FastifyRequest & { user: { orgId: string } }).user.orgId;
+    const isAdmin = (request as FastifyRequest & { user: { role: string } }).user.role === 'admin';
 
     const daysMap = { '7d': 7, '30d': 30, '90d': 90 };
     const days = daysMap[range];
@@ -166,7 +166,7 @@ export default async function userRoutes(app: FastifyInstance) {
       ? (await db.query.users.findMany({
           where: eq(users.organizationId, orgId),
           columns: { id: true },
-        })).map((u: any) => u.id)
+        })).map(u => u.id)
       : [userId];
 
     const rangeScans = await db.query.scans.findMany({
@@ -189,14 +189,14 @@ export default async function userRoutes(app: FastifyInstance) {
     });
 
     const riskDistribution = {
-      low: rangeScans.filter((s: any) => s.riskLevel === 'low').length,
-      medium: rangeScans.filter((s: any) => s.riskLevel === 'medium').length,
-      high: rangeScans.filter((s: any) => s.riskLevel === 'high').length,
+      low: rangeScans.filter(s => s.riskLevel === 'low').length,
+      medium: rangeScans.filter(s => s.riskLevel === 'medium').length,
+      high: rangeScans.filter(s => s.riskLevel === 'high').length,
     };
 
     const platformDistribution = {
-      instagram: rangeScans.filter((s: any) => s.platform === 'instagram').length,
-      youtube: rangeScans.filter((s: any) => s.platform === 'youtube').length,
+      instagram: rangeScans.filter(s => s.platform === 'instagram').length,
+      youtube: rangeScans.filter(s => s.platform === 'youtube').length,
     };
 
     const topFlaggedAccounts = [...rangeScans]
@@ -207,20 +207,20 @@ export default async function userRoutes(app: FastifyInstance) {
         platform: s.platform,
         fraudScore: s.fraudScore,
         riskLevel: s.riskLevel,
-        followers: (s.profileData as any)?.followers ?? 0,
+        followers: (s.profileData as { followers?: number })?.followers ?? 0,
         scanDate: s.createdAt.toISOString(),
       }));
 
     const trendDays = getDaysInRange(days);
     const scanVolumeTrend = trendDays.map(date => ({
       date,
-      count: rangeScans.filter((s: any) =>
+      count: rangeScans.filter(s =>
         s.createdAt.toISOString().startsWith(date)
       ).length,
     }));
 
     const avgScoreTrend = trendDays.map(date => {
-      const dayScans = rangeScans.filter((s: any) =>
+      const dayScans = rangeScans.filter(s =>
         s.createdAt.toISOString().startsWith(date)
       );
       return {
@@ -287,7 +287,7 @@ export default async function userRoutes(app: FastifyInstance) {
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const orgId = (request.user as any).orgId;
+    const orgId = (request as FastifyRequest & { user: { orgId: string } }).user.orgId;
     const org = await db.query.organizations.findFirst({
       where: eq(organizations.id, orgId),
       columns: { plan: true },
@@ -308,14 +308,14 @@ export default async function userRoutes(app: FastifyInstance) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const userId = (request.user as any).sub;
-    const isAdmin = (request.user as any).role === 'admin';
+    const userId = (request as FastifyRequest & { user: { sub: string } }).user.sub;
+    const isAdmin = (request as FastifyRequest & { user: { role: string } }).user.role === 'admin';
 
     const userIds = isAdmin
       ? (await db.query.users.findMany({
           where: eq(users.organizationId, orgId),
           columns: { id: true },
-        })).map((u: any) => u.id)
+        })).map(u => u.id)
       : [userId];
 
     const rangeScans = await db.query.scans.findMany({
@@ -337,13 +337,13 @@ export default async function userRoutes(app: FastifyInstance) {
       'scan_date',
     ];
 
-    const rows = rangeScans.map((s: any) => [
+    const rows = rangeScans.map(s => [
       s.handle,
       s.platform,
       s.fraudScore ?? '',
       s.riskLevel ?? '',
       s.realReach ?? '',
-      (s.profileData as any)?.followers ?? '',
+      s.profileData?.followers ?? '',
       s.createdAt.toISOString().split('T')[0],
     ]);
 

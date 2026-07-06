@@ -30,7 +30,7 @@ export interface InstagramComment {
 export class InstagramClient {
   private readonly baseUrl = 'https://instagram-scraper-api2.p.rapidapi.com';
   
-  private async fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<any> {
+  private async fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<unknown> {
     for (let i = 0; i <= retries; i++) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15s timeout
@@ -75,7 +75,19 @@ export class InstagramClient {
 
   async getProfile(handle: string): Promise<InstagramProfile> {
     const url = `${this.baseUrl}/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`;
-    const data = await this.fetchWithRetry(url, { headers: this.getHeaders() });
+    const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() })) as {
+      data: {
+        full_name?: string;
+        username: string;
+        follower_count?: number;
+        following_count?: number;
+        media_count?: number;
+        biography?: string;
+        profile_pic_url?: string;
+        is_verified?: boolean;
+        category_name?: string;
+      };
+    };
     
     const user = data.data;
     
@@ -94,10 +106,12 @@ export class InstagramClient {
 
   async getRecentPosts(handle: string, count: number = 20): Promise<InstagramPost[]> {
     const url = `${this.baseUrl}/v1.2/posts?username_or_id_or_url=${encodeURIComponent(handle)}`;
-    const data = await this.fetchWithRetry(url, { headers: this.getHeaders() });
+    const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() })) as {
+      data?: { items?: { id: string; taken_at?: number; like_count?: number; comment_count?: number; caption?: { text?: string } }[] };
+    };
     
     const items = data.data?.items || [];
-    return items.slice(0, count).map((item: any) => ({
+    return items.slice(0, count).map((item) => ({
       id: item.id,
       timestamp: new Date((item.taken_at || 0) * 1000).toISOString(),
       likes: item.like_count || 0,
@@ -117,7 +131,9 @@ export class InstagramClient {
       
       const url = `${this.baseUrl}/v1/comments?code_or_id_or_url=${post.id}`;
       try {
-        const data = await this.fetchWithRetry(url, { headers: this.getHeaders() }, 1);
+        const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() }, 1)) as {
+          data?: { items?: { text?: string; user?: { username?: string }; created_at?: number }[] };
+        };
         const postComments = data.data?.items || [];
         
         for (const item of postComments) {
@@ -127,7 +143,7 @@ export class InstagramClient {
             timestamp: new Date((item.created_at || 0) * 1000).toISOString()
           });
         }
-      } catch (err) {
+      } catch {
         console.warn(`Failed to fetch comments for post ${post.id}`);
         // gracefully continue for other posts
       }

@@ -104,13 +104,13 @@ export default async function authRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post('/forgot-password', async (request, reply) => {
+  app.post('/forgot-password', async (request) => {
     const data = forgotPasswordSchema.parse(request.body);
     await authService.forgotPassword(data.email);
     return { message: 'If an account exists, a reset link has been sent' };
   });
 
-  app.post('/reset-password', async (request, reply) => {
+  app.post('/reset-password', async (request) => {
     const data = resetPasswordSchema.parse(request.body);
     await authService.resetPassword(data.token, data.password);
     return { message: 'Password has been reset' };
@@ -230,7 +230,7 @@ export default async function authRoutes(app: FastifyInstance) {
         }),
       });
 
-      const tokenData = (await tokenResponse.json()) as any;
+      const tokenData = (await tokenResponse.json()) as { access_token?: string };
 
       if (!tokenData.access_token) {
         throw new Error('No access token received from Google');
@@ -248,7 +248,7 @@ export default async function authRoutes(app: FastifyInstance) {
       });
 
       return reply.redirect(`${env.FRONTEND_URL}/auth/google/success?${params}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       req.log.error({ err }, 'Google OAuth callback failed');
       return reply.redirect(`${env.FRONTEND_URL}/login?error=google_failed`);
     }

@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyRequest } from 'fastify'
 import { db } from '../db/client'
 import { organizations } from '../db/schema'
 import { eq } from 'drizzle-orm'
@@ -18,7 +18,6 @@ export class ScanLimitError extends AppError {
 
 export async function checkScanQuota(
   req: FastifyRequest,
-  reply: FastifyReply,
 ): Promise<void> {
   const orgId = req.user.orgId
 

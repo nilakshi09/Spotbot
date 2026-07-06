@@ -28,8 +28,8 @@ export class CommentSentimentAnalyzer {
     let spam = 0;
     let duplicateComments = 0;
 
-    const botRegex = /^(nice|great|amazing|awesome|love|beautiful|gorgeous|stunning|perfect|wow|cool)\s*(post|pic|photo|content|shot|feed|work|job)?[!\s][❤🔥💯👏✨😍💪🙌👍]*$/i;
-    const emojiRegex = /^[❤🔥💯👏✨😍👍💪🙌💕🌟⭐🎉🥰😘]+$/;
+    const botRegex = /^(nice|great|amazing|awesome|love|beautiful|gorgeous|stunning|perfect|wow|cool)\s*(post|pic|photo|content|shot|feed|work|job)?[!\s][❤🔥💯👏✨😍💪🙌👍]*$/iu;
+    const emojiRegex = /^[❤🔥💯👏✨😍👍💪🙌💕🌟⭐🎉🥰😘]+$/u;
     const followBaitRegex = /follow\s*(me|back|us)|check\s*(my|out)\s*(page|profile|bio|link)/i;
     const fireLitRegex = /^(f+i+r+e+|l+i+t+|🔥+|💯+)$/i;
     const niceJobRegex = /^(great|nice|good|excellent)\s*(content|post|pic|work|job)[.!]*$/i;

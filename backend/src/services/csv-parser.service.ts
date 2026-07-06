@@ -21,7 +21,7 @@ export class CSVParserService {
     let totalRows = 0
 
     try {
-      const records: any[] = parse(csvContent, {
+      const records: Record<string, string>[] = parse(csvContent, {
         columns: true,          // First row is header
         skip_empty_lines: true,
         trim: true,
@@ -38,7 +38,6 @@ export class CSVParserService {
       // Validate headers
       const firstRecord = records[0]
       const hasHandle = 'handle' in firstRecord
-      const hasPlatform = 'platform' in firstRecord
 
       if (!hasHandle) {
         errors.push(
@@ -113,8 +112,8 @@ export class CSVParserService {
         }
       }
 
-    } catch (err: any) {
-      errors.push(`Failed to parse CSV: ${err.message}`)
+    } catch (err: unknown) {
+      errors.push(`Failed to parse CSV: ${err instanceof Error ? err.message : String(err)}`)
     }
 
     return { handles, errors, totalRows }

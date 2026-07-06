@@ -40,7 +40,7 @@ export class BillingService {
       try {
         const sub = await stripe.subscriptions.retrieve(org.stripeSubscriptionId);
         stripeSubscription = sub;
-        const currentPeriodEnd = (sub as any).current_period_end;
+        const currentPeriodEnd = (sub as { current_period_end?: number }).current_period_end;
 
 if (currentPeriodEnd) {
   nextBillingDate = new Date(currentPeriodEnd * 1000).toISOString();
@@ -107,7 +107,7 @@ if (currentPeriodEnd) {
 
     // If already has active subscription → use upgrade flow (not new checkout)
     if (org.stripeSubscriptionId) {
-      return this.createUpgradeSession(org.stripeSubscriptionId, priceId, customerId, orgId);
+      return this.createUpgradeSession(org.stripeSubscriptionId, priceId, customerId);
     }
 
     // Create new checkout session
@@ -140,7 +140,6 @@ if (currentPeriodEnd) {
     subscriptionId: string,
     newPriceId: string,
     customerId: string,
-    orgId: string,
   ) {
     // For plan changes, use Stripe's billing portal with a flow
     const session = await stripe.billingPortal.sessions.create({

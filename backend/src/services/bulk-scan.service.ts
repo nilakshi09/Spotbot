@@ -1,6 +1,6 @@
 import { db } from '../db/client.js'
-import { bulkScans, scans, organizations, users } from '../db/schema/index.js'
-import { eq, and, inArray, sql, desc } from 'drizzle-orm'
+import { bulkScans, organizations } from '../db/schema/index.js'
+import { eq, and, sql, desc } from 'drizzle-orm'
 import { scanQueue } from '../jobs/queue.js'
 import { quotaService } from './quota.service.js'
 import { logger } from '../utils/logger.js'

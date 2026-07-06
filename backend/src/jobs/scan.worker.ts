@@ -36,7 +36,7 @@ export const scanWorker = new Worker<ScanJobData>(
     // 1. Update scan status → 'processing'
     await db.update(scans).set({ status: 'processing' }).where(eq(scans.id, scanId));
 
-    const userId = (job.data as any).userId || job.data.orgId;
+    const userId = job.data.userId || job.data.orgId;
     businessLogger.scanCreated(scanId, userId, platform, handle);
     track.scanCreated();
     const startTime = Date.now();
@@ -106,19 +106,20 @@ export const scanWorker = new Worker<ScanJobData>(
       }
 
       return result;
-    } catch (error: any) {
-      if (error.message?.includes('Authentication failed')) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      if (err.message?.includes('Authentication failed')) {
         await redis.del(`scan:progress:${scanId}`).catch(() => {});
-        console.error(`Unrecoverable error processing scan ${scanId}:`, error);
-        throw new UnrecoverableError(error.message);
+        console.error(`Unrecoverable error processing scan ${scanId}:`, err);
+        throw new UnrecoverableError(err.message);
       }
       // Do not clean up progress key on transient failure so the UI doesn't hang at step 0
-      console.error(`Error processing scan ${scanId}:`, error);
-      throw error; // Let BullMQ retry
+      console.error(`Error processing scan ${scanId}:`, err);
+      throw err; // Let BullMQ retry
     }
   },
   {
-    connection: redis as any,
+    connection: redis as never,
     concurrency: 5,
     limiter: { max: 10, duration: 60_000 },
   }

@@ -58,7 +58,7 @@ export function generateRiskSummary(
 
   // Highlight highest-scoring signals with decent confidence
   const sortedSignals = Object.entries(signals)
-    .filter(([_, s]) => s.score > 40 && s.confidence >= 0.5)
+    .filter(([, s]) => s.score > 40 && s.confidence >= 0.5)
     .sort((a, b) => b[1].score - a[1].score);
 
   for (const [key, signal] of sortedSignals) {
@@ -66,7 +66,7 @@ export function generateRiskSummary(
       sentences.push(`${signal.details.unexplainedSpikes} unexplained follower spikes were detected with no corresponding content activity.`);
     }
     if (key === 'engagementRate' && signal.details?.accountER !== undefined) {
-      const { accountER, benchmarkER, ratio } = signal.details as any;
+      const { accountER, benchmarkER, ratio } = signal.details as { accountER: number; benchmarkER: number; ratio: number };
       if (ratio < 0.6) {
         sentences.push(`Engagement rate (${accountER.toFixed(2)}%) is well below the niche average (${benchmarkER.toFixed(2)}%).`);
       } else if (ratio > 3.0) {
@@ -80,7 +80,7 @@ export function generateRiskSummary(
       }
     }
     if (key === 'growthVelocity' && signal.details?.anomalyDays) {
-      const anomalies = (signal.details.anomalyDays as any[]).length;
+      const anomalies = (signal.details.anomalyDays as unknown[]).length;
       if (anomalies > 1) {
         sentences.push(`${anomalies} abnormal growth spikes detected in the recent period.`);
       }

@@ -4,7 +4,6 @@ import {
   varchar,
   timestamp,
   boolean,
-  pgEnum,
 } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations.js';
 import { users } from './users.js';

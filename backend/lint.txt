@@ -1,0 +1,241 @@
+
+> spotbot-backend@0.1.0 lint
+> eslint src/
+
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\app.ts
+  90:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  96:14  error  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\db\schema\invitations.ts
+  7:3  error  'pgEnum' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\engine\analyzers\comment-sentiment.ts
+  31:156  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:158  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:160  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:163  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:165  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:167  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  31:169  error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:28   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:30   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:32   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:35   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:37   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:39   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:41   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:43   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:45   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:48   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:50   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+  32:52   error  Unexpected surrogate pair in character class. Use 'u' flag  no-misleading-character-class
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\engine\analyzers\engagement-benchmark.ts
+   34:9  error  The value assigned to 'score' is not used in subsequent statements  no-useless-assignment
+  110:9  error  The value assigned to 'score' is not used in subsequent statements  no-useless-assignment
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\engine\analyzers\spike-detection.ts
+  35:19  error  Unexpected any. Specify a different type                            @typescript-eslint/no-explicit-any
+  98:9   error  The value assigned to 'score' is not used in subsequent statements  no-useless-assignment
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\engine\scoring.ts
+  61:15  error  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  69:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\integrations\instagram.client.ts
+   33:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:16  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\integrations\socialblade.client.ts
+  34:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\integrations\youtube.client.ts
+   59:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\jobs\queue.ts
+  5:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\jobs\scan.worker.ts
+   39:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\middleware\api-key.middleware.ts
+   15:3   error  'reply' is defined but never used         @typescript-eslint/no-unused-vars
+  103:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\middleware\auth.middleware.ts
+   1:10  error  'FastifyInstance' is defined but never used  @typescript-eslint/no-unused-vars
+  30:12  error  'err' is defined but never used              @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\middleware\error-handler.ts
+  74:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\middleware\quota.middleware.ts
+  21:3  error  'reply' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\middleware\role.middleware.ts
+   7:3   error  'reply' is defined but never used  @typescript-eslint/no-unused-vars
+  20:38  error  'reply' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\api-key.routes.ts
+   2:10  error  'z' is defined but never used             @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  85:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\auth.routes.ts
+  107:48  error  'reply' is defined but never used         @typescript-eslint/no-unused-vars
+  113:47  error  'reply' is defined but never used         @typescript-eslint/no-unused-vars
+  233:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  251:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\health.routes.ts
+  13:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  35:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  71:14  error  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\org.routes.ts
+  19:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  65:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  98:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\public.routes.ts
+   2:10  error  'z' is defined but never used             @typescript-eslint/no-unused-vars
+  47:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\report.routes.ts
+    4:10  error  'scans' is defined but never used         @typescript-eslint/no-unused-vars
+    6:14  error  'and' is defined but never used           @typescript-eslint/no-unused-vars
+   11:10  error  'env' is defined but never used           @typescript-eslint/no-unused-vars
+   51:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\sales-lead.routes.ts
+   2:10  error  'z' is defined but never used             @typescript-eslint/no-unused-vars
+  45:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\scan.routes.ts
+   39:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  166:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\user.routes.ts
+   24:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  340:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\routes\white-label.routes.ts
+   20:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\auth.service.ts
+  74:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\billing.service.ts
+   43:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:5   error  'orgId' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\bulk-scan.service.ts
+  2:21  error  'scans' is defined but never used    @typescript-eslint/no-unused-vars
+  2:43  error  'users' is defined but never used    @typescript-eslint/no-unused-vars
+  3:19  error  'inArray' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\csv-parser.service.ts
+   24:22  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   41:13  error  'hasPlatform' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  116:19  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\google-oauth.service.ts
+   4:10  error  'businessLogger' is defined but never used  @typescript-eslint/no-unused-vars
+  37:58  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\pdf.service.ts
+  184:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  309:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  313:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  325:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\sales-lead.service.ts
+   2:37  error  'users' is defined but never used           @typescript-eslint/no-unused-vars
+  71:5   error  'seats' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\scan.service.ts
+    3:10  error  'organizations' is defined but never used  @typescript-eslint/no-unused-vars
+  131:82  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  132:85  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  133:76  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  140:38  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\services\team.service.ts
+   4:19  error  'ne' is defined but never used  @typescript-eslint/no-unused-vars
+  10:10  error  'z' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\nilak\OneDrive\Desktop\Spotbot\backend\src\utils\metrics.ts
+  2:10  error  'env' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 162 problems (162 errors, 0 warnings)
+

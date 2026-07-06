@@ -32,7 +32,12 @@ export class SpikeDetectionAnalyzer {
     let largestSpikeSize = 0;
     let largestSpikeDate = '';
 
-    const spikes: any[] = [];
+    const spikes: {
+      date: string;
+      magnitude: number;
+      classification: 'explained' | 'partially_explained' | 'unexplained';
+      nearestPost?: string;
+    }[] = [];
     
     // Calculate average post-driven gain (simplified: average of all gains where post was made)
     // For this prototype we will assume a typical post driven gain is simply the rolling avg * 2. 
@@ -95,7 +100,7 @@ export class SpikeDetectionAnalyzer {
       }
     }
 
-    let score = 0;
+    let score: number;
     if (unexplainedSpikes === 0) {
       // 0–10 random noise based on partially explained
       score = Math.min(10, partiallyExplainedSpikes * 5);

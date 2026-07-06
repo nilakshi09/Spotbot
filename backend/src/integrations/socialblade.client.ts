@@ -31,13 +31,13 @@ export class SocialBladeClient {
         return [];
       }
       
-      const data: any = await response.json();
+      const data = (await response.json()) as { data?: { daily?: { date: string; followers?: number }[] } };
       
       // Map response to our FollowerSnapshot format
       // SocialBlade typically returns a daily array
       const history = data.data?.daily || [];
       
-      const snapshots = history.slice(-days).map((day: any) => ({
+      const snapshots = history.slice(-days).map((day: { date: string; followers?: number }) => ({
         date: day.date,
         followers: day.followers || 0
       }));

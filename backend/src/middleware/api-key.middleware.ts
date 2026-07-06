@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyRequest } from 'fastify'
 import { apiKeyService } from '../services/api-key.service.js'
 import { db } from '../db/client.js'
 import { organizations, users } from '../db/schema/index.js'
@@ -12,7 +12,6 @@ import { UnauthorizedError, AppError } from './error-handler.js'
 // Tries JWT first, then falls back to API key
 export async function verifyJwtOrApiKey(
   req: FastifyRequest,
-  reply: FastifyReply,
 ): Promise<void> {
   const authHeader = req.headers.authorization
   const apiKeyHeader = req.headers['x-api-key'] as string | undefined
@@ -100,7 +99,7 @@ async function authenticateWithApiKey(
   if (!adminUser) throw new UnauthorizedError('No admin user found')
 
   // Set user context on request (same shape as JWT middleware)
-  ;(req as any).user = {
+  ;(req as FastifyRequest & { user?: { sub: string; email: string; orgId: string; role: string; plan: string; authMethod: string; apiKeyId: string } }).user = {
     sub: adminUser.id,
     email: adminUser.email,
     orgId,

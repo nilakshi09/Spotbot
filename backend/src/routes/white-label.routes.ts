@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { whiteLabelService } from '../services/white-label.service.js'
 import { verifyAccessToken } from '../middleware/auth.middleware.js'
@@ -17,7 +17,7 @@ export default async function whiteLabelRoutes(
     preHandler: [verifyAccessToken],
   }, async (req, reply) => {
     const branding = await whiteLabelService.getBranding(
-      (req as any).user.orgId
+      (req as FastifyRequest & { user: { orgId: string } }).user.orgId
     )
     return reply.send(branding)
   })
@@ -43,7 +43,7 @@ export default async function whiteLabelRoutes(
     });
     const updates = schema.parse(req.body);
     const branding = await whiteLabelService.updateBranding(
-      (req as any).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string } }).user.orgId,
       updates,
     )
     return reply.send(branding)
@@ -54,7 +54,7 @@ export default async function whiteLabelRoutes(
   app.delete('/branding', {
     preHandler: [verifyAccessToken, requireAdmin],
   }, async (req, reply) => {
-    await whiteLabelService.resetBranding((req as any).user.orgId)
+    await whiteLabelService.resetBranding((req as FastifyRequest & { user: { orgId: string } }).user.orgId)
     return reply.send({ reset: true })
   })
 
@@ -92,12 +92,12 @@ export default async function whiteLabelRoutes(
 
     // Upload to Supabase Storage
     const logoUrl = await uploadLogo(
-      (req as any).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string } }).user.orgId,
       fileBuffer,
       data.mimetype,
     )
 
-    await whiteLabelService.updateLogoUrl((req as any).user.orgId, logoUrl)
+    await whiteLabelService.updateLogoUrl((req as FastifyRequest & { user: { orgId: string } }).user.orgId, logoUrl)
 
     return reply.send({ logoUrl })
   })

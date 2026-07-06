@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function PdfDocument({ scan, branding }: { scan: any, branding: BrandingConfig }) {
+function PdfDocument({ scan, branding }: { scan: { createdAt: string | Date; riskLevel?: string | null; handle: string; platform: string; fraudScore?: number | null }, branding: BrandingConfig }) {
   const dateStr = new Date(scan.createdAt).toLocaleDateString(
     'en-US',
     {
@@ -306,11 +306,11 @@ function PdfDocument({ scan, branding }: { scan: any, branding: BrandingConfig }
 
 export class PdfService {
 
-  async generatePdf(scan: any, branding?: BrandingConfig): Promise<string> {
+  async generatePdf(scan: { id: string; userId: string; createdAt: string | Date; riskLevel?: string | null; handle: string; platform: string; fraudScore?: number | null }, branding?: BrandingConfig): Promise<string> {
     const brandingConfig = branding ?? await whiteLabelService.getBranding(scan.userId);
 
     const stream = await renderToStream(
-      PdfDocument({ scan, branding: brandingConfig }) as any
+      PdfDocument({ scan, branding: brandingConfig }) as unknown as React.ReactElement<import('@react-pdf/renderer').DocumentProps>
     );
 
     const key = `reports/${scan.id}.pdf`;
@@ -322,7 +322,7 @@ export class PdfService {
         Bucket: env.S3_BUCKET,
         Key: key,
 
-        Body: stream as any,
+        Body: stream as unknown as import('stream').Readable,
 
         ContentType: 'application/pdf',
       },

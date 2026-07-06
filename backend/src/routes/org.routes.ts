@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { teamService } from '../services/team.service.js';
 import { verifyAccessToken } from '../middleware/auth.middleware.js';
@@ -16,7 +16,7 @@ export default async function orgRoutes(app: FastifyInstance) {
   app.get('/members', {
     preHandler: [verifyAccessToken],
   }, async (req, reply) => {
-    const result = await teamService.getMembers((req as any).user.orgId);
+    const result = await teamService.getMembers((req as FastifyRequest & { user: { orgId: string } }).user.orgId);
     return reply.send(result);
   });
 
@@ -32,8 +32,8 @@ export default async function orgRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     const result = await teamService.inviteMember(
-      (req as any).user.orgId,
-      (req as any).user.sub,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.sub,
       email,
       role,
     );
@@ -48,7 +48,7 @@ export default async function orgRoutes(app: FastifyInstance) {
     preHandler: [verifyAccessToken, requireAdmin],
   }, async (req, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
-    const result = await teamService.revokeInvitation((req as any).user.orgId, id);
+    const result = await teamService.revokeInvitation((req as FastifyRequest & { user: { orgId: string } }).user.orgId, id);
     return reply.send(result);
   });
 
@@ -61,8 +61,8 @@ export default async function orgRoutes(app: FastifyInstance) {
     const { userId } = z.object({ userId: z.string().uuid() }).parse(req.params);
 
     const result = await teamService.removeMember(
-      (req as any).user.orgId,
-      (req as any).user.sub,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.sub,
       userId,
     );
 
@@ -79,8 +79,8 @@ export default async function orgRoutes(app: FastifyInstance) {
     const { role } = z.object({ role: z.enum(['admin', 'member']) }).parse(req.body);
 
     const result = await teamService.changeMemberRole(
-      (req as any).user.orgId,
-      (req as any).user.sub,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.orgId,
+      (req as FastifyRequest & { user: { orgId: string; sub: string } }).user.sub,
       userId,
       role,
     );
@@ -95,7 +95,7 @@ export default async function orgRoutes(app: FastifyInstance) {
     preHandler: [verifyAccessToken],
   }, async (req, reply) => {
     const org = await db.query.organizations.findFirst({
-      where: eq(organizations.id, (req as any).user.orgId),
+      where: eq(organizations.id, (req as FastifyRequest & { user: { orgId: string } }).user.orgId),
     });
 
     if (!org) throw new NotFoundError('Organization not found');
