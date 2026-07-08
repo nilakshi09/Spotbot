@@ -18,6 +18,18 @@ async function main() {
     cleanupExpiredInvitations();
     setInterval(cleanupExpiredShareTokens, 24 * 60 * 60 * 1000);
     setInterval(cleanupExpiredInvitations, 24 * 60 * 60 * 1000);
+
+    // Start scan worker in same process
+    async function startWorker() {
+      try {
+        const { startScanWorker } = await import('./jobs/scan.worker.js');
+        await startScanWorker();
+        console.log('Scan worker started successfully');
+      } catch (err) {
+        console.error('Failed to start scan worker:', err);
+      }
+    }
+    startWorker();
   } catch (err) {
     app.log.error(err);
     process.exit(1);
