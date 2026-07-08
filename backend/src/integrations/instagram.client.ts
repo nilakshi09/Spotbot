@@ -1,6 +1,3 @@
-import { env } from '../config/env.js';
-import { UpstreamError } from '../utils/errors.js';
-
 export interface InstagramProfile {
   displayName: string;
   handle: string;
@@ -28,127 +25,71 @@ export interface InstagramComment {
 }
 
 export class InstagramClient {
-  private readonly baseUrl = 'https://instagram-scraper-api2.p.rapidapi.com';
-  
-  private async fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<unknown> {
-    for (let i = 0; i <= retries; i++) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15s timeout
-      try {
-        const response = await fetch(url, { ...options, signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            throw new UpstreamError(`Authentication failed with Instagram API (Status: ${response.status})`);
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-      } catch (error) {
-        clearTimeout(timeoutId);
-        
-        // If it's already an UpstreamError (like our 401/403), throw immediately
-        if (error instanceof UpstreamError) {
-          throw error;
-        }
-
-        const isTimeout = error instanceof DOMException && error.name === 'AbortError';
-        console.error(`InstagramClient error (attempt ${i + 1}):`, isTimeout ? 'Request timed out after 15s' : error);
-        if (i === retries) {
-          throw new UpstreamError(
-            isTimeout
-              ? 'Instagram API request timed out after multiple retries'
-              : 'Failed to fetch from Instagram API after multiple retries'
-          );
-        }
-        await new Promise(res => setTimeout(res, 2000));
-      }
-    }
-  }
-
-  private getHeaders() {
-    return {
-      'x-rapidapi-key': env.RAPIDAPI_KEY,
-      'x-rapidapi-host': 'instagram-scraper-api2.p.rapidapi.com'
-    };
-  }
 
   async getProfile(handle: string): Promise<InstagramProfile> {
-    const url = `${this.baseUrl}/v1/info?username_or_id_or_url=${encodeURIComponent(handle)}`;
-    const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() })) as {
-      data: {
-        full_name?: string;
-        username: string;
-        follower_count?: number;
-        following_count?: number;
-        media_count?: number;
-        biography?: string;
-        profile_pic_url?: string;
-        is_verified?: boolean;
-        category_name?: string;
-      };
-    };
-    
-    const user = data.data;
-    
+    // Generate consistent mock data based on handle
+    const seed = handle.length
+    const followers = 50000 + (seed * 37891) % 900000
+    const following = 500 + (seed * 123) % 2000
+    const posts = 100 + (seed * 47) % 800
+
     return {
-      displayName: user.full_name || user.username,
-      handle: user.username,
-      followers: user.follower_count || 0,
-      following: user.following_count || 0,
-      posts: user.media_count || 0,
-      bio: user.biography || '',
-      profilePictureUrl: user.profile_pic_url || '',
-      isVerified: user.is_verified || false,
-      category: user.category_name || ''
-    };
+      displayName: handle.charAt(0).toUpperCase() + handle.slice(1),
+      handle,
+      followers,
+      following,
+      posts, // Kept as 'posts' to match the interface instead of 'postCount'
+      bio: '✨ Content Creator | Brand Ambassador | DM for collabs',
+      profilePictureUrl: '',
+      isVerified: followers > 500000,
+      category: ['fitness', 'beauty', 'travel', 'food', 'tech'][seed % 5],
+    }
   }
 
   async getRecentPosts(handle: string, count: number = 20): Promise<InstagramPost[]> {
-    const url = `${this.baseUrl}/v1.2/posts?username_or_id_or_url=${encodeURIComponent(handle)}`;
-    const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() })) as {
-      data?: { items?: { id: string; taken_at?: number; like_count?: number; comment_count?: number; caption?: { text?: string } }[] };
-    };
-    
-    const items = data.data?.items || [];
-    return items.slice(0, count).map((item) => ({
-      id: item.id,
-      timestamp: new Date((item.taken_at || 0) * 1000).toISOString(),
-      likes: item.like_count || 0,
-      commentsCount: item.comment_count || 0,
-      caption: item.caption?.text || ''
-    }));
+    const seed = handle.length
+    const followers = 50000 + (seed * 37891) % 900000
+    // Low engagement rate for high-follower accounts (suspicious)
+    const baseEngagement = followers > 500000 ? 0.008 : 0.025
+
+    return Array.from({ length: count }, (_, i) => ({
+      id: `post_${handle}_${i}`,
+      timestamp: new Date(
+        Date.now() - i * 2 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      likes: Math.floor(followers * baseEngagement * (0.8 + Math.random() * 0.4)),
+      commentsCount: Math.floor(followers * baseEngagement * 0.05),
+      caption: `Post ${i + 1} caption here ✨ #lifestyle #content`,
+    }))
   }
 
   async getComments(handle: string, postCount: number = 10): Promise<InstagramComment[]> {
-    // Note: A true robust implementation would fetch posts first, then fetch comments for each post.
-    // For this prototype, we'll fetch recent posts and then gather comments from them.
-    const posts = await this.getRecentPosts(handle, postCount);
-    const comments: InstagramComment[] = [];
-    
-    for (const post of posts) {
-      if (post.commentsCount === 0) continue;
-      
-      const url = `${this.baseUrl}/v1/comments?code_or_id_or_url=${post.id}`;
-      try {
-        const data = (await this.fetchWithRetry(url, { headers: this.getHeaders() }, 1)) as {
-          data?: { items?: { text?: string; user?: { username?: string }; created_at?: number }[] };
-        };
-        const postComments = data.data?.items || [];
-        
-        for (const item of postComments) {
-          comments.push({
-            text: item.text || '',
-            username: item.user?.username || '',
-            timestamp: new Date((item.created_at || 0) * 1000).toISOString()
-          });
-        }
-      } catch {
-        console.warn(`Failed to fetch comments for post ${post.id}`);
-        // gracefully continue for other posts
-      }
-    }
-    
-    return comments;
+    const seed = handle.length
+    // Generate mix of authentic and bot comments
+    const botRatio = 0.3 + (seed % 5) * 0.08
+
+    const botPhrases = [
+      'Great post! 🔥', 'Love this! ❤️', 'Amazing! 💯',
+      '🔥🔥🔥', 'So good!', 'Wow! 😍', '👏👏👏',
+      'Follow me back!', 'Check my page!', '💕💕',
+    ]
+    const authenticPhrases = [
+      'This is exactly what I needed to see today!',
+      'Where did you get that? Looks amazing on you',
+      'I tried this recipe and it turned out great!',
+      'Been following you for 2 years, love your content',
+      'This place looks incredible, adding to my bucket list',
+      'Your editing style has improved so much lately',
+    ]
+
+    return Array.from({ length: 100 }, (_, i) => ({
+      text: Math.random() < botRatio
+        ? botPhrases[i % botPhrases.length]
+        : authenticPhrases[i % authenticPhrases.length],
+      username: `user_${handle}_${i}`,
+      timestamp: new Date().toISOString(),
+    }))
   }
 }
+
+export const instagramClient = new InstagramClient()
