@@ -20,9 +20,14 @@ const baseOptions: RedisOptions = {
 // Shared client for direct commands (cache, progress, locks)
 export const redis = new Redis(env.REDIS_URL, baseOptions);
 
-// Connection options for BullMQ (Queue & Worker create their own connections)
-export const redisConnection: RedisOptions & { url: string } = {
-  url: env.REDIS_URL,
+// Connection options for BullMQ (Queue & Worker create their own connections).
+// BullMQ does NOT accept a URL string — it needs discrete host/port/password/tls fields.
+export const redisConnection: RedisOptions = {
+  host: redisUrl.hostname,
+  port: Number(redisUrl.port) || (useTls ? 6380 : 6379),
+  username: redisUrl.username || undefined,
+  password: redisUrl.password || undefined,
+  db: redisUrl.pathname ? Number(redisUrl.pathname.slice(1)) || 0 : 0,
   ...baseOptions,
 };
 
