@@ -82,7 +82,7 @@ export class InstagramClient {
       'Your editing style has improved so much lately',
     ]
 
-    return Array.from({ length: 100 }, (_, i) => ({
+    return Array.from({ length: postCount }, (_, i) => ({
       text: Math.random() < botRatio
         ? botPhrases[i % botPhrases.length]
         : authenticPhrases[i % authenticPhrases.length],
