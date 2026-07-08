@@ -2,7 +2,7 @@ import { Worker, Job, UnrecoverableError } from 'bullmq';
 import { db } from '../db/client.js';
 import { scans } from '../db/schema/scans.js';
 import { eq } from 'drizzle-orm';
-import { redis } from '../config/redis.js';
+import { redis, redisConnection } from '../config/redis.js';
 import { ScanJobData } from './queue.js';
 import { FraudEngine } from '../engine/engine.js';
 import { InstagramClient } from '../integrations/instagram.client.js';
@@ -120,7 +120,7 @@ export async function startScanWorker() {
       }
     },
     {
-      connection: redis as never,
+      connection: redisConnection,
       concurrency: 5,
       limiter: { max: 10, duration: 60_000 },
     }

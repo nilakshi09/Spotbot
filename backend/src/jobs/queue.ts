@@ -1,8 +1,8 @@
 import { Queue } from 'bullmq';
-import { redis } from '../config/redis.js';
+import { redisConnection } from '../config/redis.js';
 
 export const scanQueue = new Queue('scans', {
-  connection: redis as never,
+  connection: redisConnection,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
