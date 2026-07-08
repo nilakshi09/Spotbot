@@ -22,13 +22,33 @@ export const redis = new Redis(env.REDIS_URL, baseOptions);
 
 // Connection options for BullMQ (Queue & Worker create their own connections).
 // BullMQ does NOT accept a URL string — it needs discrete host/port/password/tls fields.
+
+
+// export const redisConnection: RedisOptions = {
+//   host: redisUrl.hostname,
+//   port: Number(redisUrl.port) || (useTls ? 6380 : 6379),
+//   username: redisUrl.username || undefined,
+//   password: redisUrl.password || undefined,
+//   db: redisUrl.pathname ? Number(redisUrl.pathname.slice(1)) || 0 : 0,
+//   ...baseOptions,
+// };
+
+
 export const redisConnection: RedisOptions = {
   host: redisUrl.hostname,
   port: Number(redisUrl.port) || (useTls ? 6380 : 6379),
   username: redisUrl.username || undefined,
   password: redisUrl.password || undefined,
   db: redisUrl.pathname ? Number(redisUrl.pathname.slice(1)) || 0 : 0,
-  ...baseOptions,
+  maxRetriesPerRequest: null,
+  enableOfflineQueue: false,
+  connectTimeout: 10000,
+  ...(useTls && {
+    tls: {
+      rejectUnauthorized: false,
+    },
+  }),
+  // commandTimeout REMOVE kar diya — BullMQ ke blocking commands ke saath conflict karta hai
 };
 
 redis.on('connect', () => {
