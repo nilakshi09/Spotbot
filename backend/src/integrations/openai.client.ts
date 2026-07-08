@@ -8,7 +8,8 @@ export class OpenAIClient {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
+      apiKey: env.GROQ_API_KEY,
+      baseURL: 'https://api.groq.com/openai/v1',
     });
   }
 
@@ -30,7 +31,7 @@ ${comments.map((c, i) => `${i + 1}. ${c}`).join('\n')}`;
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
       }, { timeout: 30_000 }); // 30s timeout to prevent hanging
