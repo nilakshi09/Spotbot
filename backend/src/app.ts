@@ -47,18 +47,32 @@ export async function buildApp() {
   });
 
   // CORS
+  const frontendUrl = process.env.FRONTEND_URL?.replace(/\/+$/, ''); // strip trailing slashes
+
   await app.register(cors, {
     origin: (origin, cb) => {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'http://localhost:3001',
-      ].filter(Boolean)
+      // Allow requests with no origin (server-to-server, curl, health checks)
+      if (!origin) {
+        cb(null, true);
+        return;
+      }
 
-      if (!origin || allowedOrigins.includes(origin)) {
-        cb(null, true)
+      // Localhost for development
+      const localhostPattern = /^http:\/\/localhost:\d+$/;
+
+      // Vercel preview deployments: https://<project>-<hash>-<team>.vercel.app
+      const vercelPreviewPattern = /^https:\/\/[\w-]+\.vercel\.app$/;
+
+      const isAllowed =
+        (frontendUrl && origin === frontendUrl) ||         // exact production match
+        localhostPattern.test(origin) ||                   // any localhost port in dev
+        vercelPreviewPattern.test(origin);                 // Vercel preview deploys
+
+      if (isAllowed) {
+        cb(null, true);
       } else {
-        cb(new Error('Not allowed by CORS'), false)
+        app.log.warn(`CORS blocked origin: ${origin}`);
+        cb(new Error('Not allowed by CORS'), false);
       }
     },
     credentials: true,

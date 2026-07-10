@@ -37,3 +37,10 @@ async function main() {
 }
 
 main();
+
+// Auto-start worker in same process
+import('./jobs/scan.worker.js').then(() => {
+  console.log('[Worker] Scan worker started in same process')
+}).catch(err => {
+  console.error('[Worker] Failed to start:', err)
+})
