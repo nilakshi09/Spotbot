@@ -58,35 +58,36 @@ export default function ScanResultPage() {
     if (!params.id) return;
 
     let mounted = true;
-    let pollInterval: NodeJS.Timeout | null = null;
+    let timerId: NodeJS.Timeout;
 
-    const fetchScan = async () => {
+    const pollScan = async () => {
       try {
         const data = await apiClient.get<ScanResult>(`/api/scans/${params.id}`);
-        if (mounted) {
-          setScan(data);
-          setIsLoading(false);
+        if (!mounted) return;
 
-          // Stop polling once scan is completed or failed
-          if (data.status === 'completed' || data.status === 'failed') {
-            if (pollInterval) clearInterval(pollInterval);
-          }
+        setScan(data);
+        setIsLoading(false);
+
+        // Stop polling once scan is completed or failed
+        if (data.status === 'completed' || data.status === 'failed') {
+          return;
         }
+
+        // Schedule the next poll only after this one completes
+        timerId = setTimeout(pollScan, 3000);
       } catch (err: unknown) {
-        if (mounted) {
-          setError(err instanceof Error ? (err.message || 'Failed to load scan') : 'Failed to load scan');
-          setIsLoading(false);
-        }
+        if (!mounted) return;
+        setError(err instanceof Error ? (err.message || 'Failed to load scan') : 'Failed to load scan');
+        setIsLoading(false);
+        // On error, we stop polling to prevent infinite error loops
       }
     };
 
-    fetchScan();
-    // Poll every 3 seconds while scan is processing
-    pollInterval = setInterval(fetchScan, 3000);
+    pollScan();
 
     return () => {
       mounted = false;
-      if (pollInterval) clearInterval(pollInterval);
+      clearTimeout(timerId);
     };
   }, [params.id]);
 
