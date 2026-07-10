@@ -89,19 +89,24 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: { code: 'UNAUTHORIZED', message: 'No refresh token provided' } });
     }
 
-    const result = await authService.refresh(refreshToken);
+    try {
+      const result = await authService.refresh(refreshToken);
 
-    reply.setCookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/api/auth/refresh',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-    });
+      reply.setCookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/api/auth/refresh',
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+      });
 
-    return {
-      accessToken: result.accessToken,
-    };
+      return {
+        accessToken: result.accessToken,
+      };
+    } catch (error) {
+      console.error('Error during token refresh:', error);
+      return reply.status(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred during token refresh' } });
+    }
   });
 
   app.post('/forgot-password', async (request) => {
