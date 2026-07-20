@@ -12,8 +12,9 @@ interface RealReachProps {
   platform: Platform;
 }
 
-function formatNumber(n: number): string {
-  return n.toLocaleString();
+function formatNumber(n: number | undefined | null): string {
+  if (n === undefined || n === null || isNaN(n)) return '0'
+  return n.toLocaleString()
 }
 
 function getPercentageColor(pct: number): string {
@@ -56,23 +57,23 @@ export default function RealReach({
 
       {/* Large number */}
       <p className="text-4xl font-bold text-white font-[family-name:var(--font-space-grotesk)]">
-        {formatNumber(estimatedReal)}
+        {formatNumber(estimatedReal ?? 0)}
       </p>
 
       {/* Subtext */}
       <p className="text-sm text-[#8899aa] mt-1">
-        of {formatNumber(total)} {totalLabel}{' '}
-        <span className={`font-semibold ${getPercentageColor(percentage)}`}>
-          ({percentage}% authentic)
+        of {formatNumber(total ?? 0)} {totalLabel}{' '}
+        <span className={`font-semibold ${getPercentageColor(percentage ?? 0)}`}>
+          ({percentage ?? 0}% authentic)
         </span>
       </p>
 
       {/* Progress bar */}
       <div className="mt-5 h-3 rounded-full bg-white/5 overflow-hidden">
         <motion.div
-          className={`h-full rounded-full ${getBarColor(percentage)}`}
+          className={`h-full rounded-full ${getBarColor(percentage ?? 0)}`}
           initial={{ width: 0 }}
-          animate={{ width: `${Math.min(percentage, 100)}%` }}
+          animate={{ width: `${Math.min(percentage ?? 0, 100)}%` }}
           transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
         />
       </div>
@@ -80,8 +81,8 @@ export default function RealReach({
       {/* Percentage labels */}
       <div className="flex justify-between mt-2">
         <span className="text-xs text-[#8899aa]">0%</span>
-        <span className={`text-xs font-semibold ${getPercentageColor(percentage)}`}>
-          {percentage}%
+        <span className={`text-xs font-semibold ${getPercentageColor(percentage ?? 0)}`}>
+          {percentage ?? 0}%
         </span>
         <span className="text-xs text-[#8899aa]">100%</span>
       </div>

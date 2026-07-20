@@ -14,7 +14,8 @@ interface ProfileSummaryProps {
   riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
 
-function formatNumber(n: number): string {
+function formatNumber(n: number | undefined | null): string {
+  if (n === undefined || n === null || isNaN(n)) return '0';
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toLocaleString();
@@ -37,17 +38,17 @@ export default function ProfileSummary({
 
   const stats = isYouTube
     ? [
-        { label: getLabel(platform, 'followers'), value: profile.followers },
-        { label: getLabel(platform, 'posts'), value: profile.posts },
+        { label: getLabel(platform, 'followers'), value: profile?.followers },
+        { label: getLabel(platform, 'posts'), value: profile?.posts },
         {
           label: 'Total Views',
-          value: profile.extraData?.totalViews ?? 0,
+          value: profile?.extraData?.totalViews ?? 0,
         },
       ]
     : [
-        { label: getLabel(platform, 'followers'), value: profile.followers },
-        { label: getLabel(platform, 'following'), value: profile.following },
-        { label: getLabel(platform, 'posts'), value: profile.posts },
+        { label: getLabel(platform, 'followers'), value: profile?.followers },
+        { label: getLabel(platform, 'following'), value: profile?.following },
+        { label: getLabel(platform, 'posts'), value: profile?.posts },
       ];
 
   return (
@@ -69,21 +70,28 @@ export default function ProfileSummary({
       {/* Profile header */}
       <div className="flex items-start gap-5">
         {/* Avatar */}
-        <Image
-          src={profile.profilePictureUrl}
-          alt={profile.displayName}
-          width={80}
-          height={80}
-          className="w-20 h-20 rounded-full object-cover border-2 border-white/10 flex-shrink-0"
-        />
+        {profile?.profilePictureUrl ? (
+          <img
+            src={profile.profilePictureUrl}
+            alt={profile?.displayName}
+            width={80}
+            height={80}
+            className="w-20 h-20 rounded-full object-cover border-2 border-white/10 flex-shrink-0"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-white/10 flex-shrink-0">
+            {profile?.displayName?.charAt(0)?.toUpperCase() ?? '?'}
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           {/* Name + verified */}
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-white font-[family-name:var(--font-space-grotesk)] truncate">
-              {profile.displayName}
+              {profile?.displayName}
             </h2>
-            {profile.isVerified && (
+            {profile?.isVerified && (
               <BadgeCheck className="w-5 h-5 text-cyan-400 flex-shrink-0" />
             )}
           </div>
@@ -95,9 +103,9 @@ export default function ProfileSummary({
           </div>
 
           {/* Category */}
-          {profile.category && (
+          {profile?.category && (
             <span className="inline-block mt-2 text-xs text-[#8899aa] bg-white/5 px-2.5 py-0.5 rounded-full">
-              {profile.category}
+              {profile?.category}
             </span>
           )}
         </div>
@@ -119,9 +127,9 @@ export default function ProfileSummary({
       </div>
 
       {/* Bio */}
-      {profile.bio && (
+      {profile?.bio && (
         <p className="mt-4 text-sm text-[#8899aa] leading-relaxed line-clamp-2">
-          {profile.bio}
+          {profile?.bio}
         </p>
       )}
     </motion.div>
